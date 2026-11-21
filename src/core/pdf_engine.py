@@ -169,8 +169,10 @@ class PdfEngine:
         return PdfEngine.load(output_path)
 
     @staticmethod
-    def to_images(file: PdfFile, output_dir: Path, dpi: int = 200,
+    def to_images(file: PdfFile, output_dir: Path = None, dpi: int = 200,
                   fmt: str = "png", page_indices: Optional[List[int]] = None) -> List[Path]:
+        if output_dir is None:
+            output_dir = file.path.parent
         doc = fitz.open(str(file.path))
         if file.password:
             doc.authenticate(file.password)
@@ -190,7 +192,9 @@ class PdfEngine:
         return paths
 
     @staticmethod
-    def images_to_pdf(image_paths: List[Path], output_path: Path) -> PdfFile:
+    def images_to_pdf(image_paths: List[Path], output_path: Path = None) -> PdfFile:
+        if output_path is None:
+            output_path = image_paths[0].parent / "images.pdf"
         doc = fitz.open()
         for img_path in image_paths:
             img = fitz.open(str(img_path))
