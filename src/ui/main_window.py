@@ -13,6 +13,7 @@ from src.core.pdf_engine import PdfEngine
 from src.ui.widgets.file_list import FileListWidget
 from src.ui.widgets.preview import PreviewWidget
 from src.ui.widgets.tool_panels import ToolPanelsStack
+from src.ui.widgets.batch_view import BatchView
 
 
 class WorkerSignals(QObject):
@@ -54,6 +55,8 @@ NAV_ITEMS = [
     # Convert
     ("to images",     "PDF → Images", "⇒", "Convert",  "Export pages as PNG/JPG"),
     ("images to pdf", "Images → PDF", "⇐", "Convert",  "Build PDF from images"),
+    # Batch
+    ("batch",         "Batch run",      "⧉",  "Automation", "Apply one operation to all loaded PDFs"),
 ]
 
 
@@ -72,6 +75,11 @@ class MainWindow(QMainWindow):
         self.thread_pool = QThreadPool.globalInstance()
         self.current_file: PdfFile | None = None
         self.files: list[PdfFile] = []
+        # Hold PdfWorker instances alive until their signals have been dispatched.
+        # QRunnable auto-deletes after run() returns, which can destroy the
+        # WorkerSignals QObject before Qt delivers the queued finished signal
+        # for fast operations — the callback then silently never fires.
+        self._active_workers: set = set()
 
         self._build_ui()
         self._setup_menu()
@@ -194,7 +202,20 @@ class MainWindow(QMainWindow):
         self.content_stack = QStackedWidget()
         self.content_stack.addWidget(self._build_home_view())        # index 0
         self.content_stack.addWidget(self._build_tools_view())       # index 1
+        self.content_stack.addWidget(self._build_batch_view())       # index 2
         return self.content_stack
+
+    def _build_batch_view(self) -> QWidget:
+        wrap = QWidget()
+        v = QVBoxLayout(wrap)
+        v.setContentsMargins(20, 20, 20, 20)
+        v.setSpacing(0)
+        self.batch_view = BatchView()
+        self.batch_view.status_message.connect(
+            lambda msg, ms: self.status.showMessage(msg, ms)
+        )
+        v.addWidget(self.batch_view, 1)
+        return wrap
 
     # ---------- Home ----------
     def _build_home_view(self) -> QWidget:
@@ -392,6 +413,9 @@ class MainWindow(QMainWindow):
         if key == "home":
             self.content_stack.setCurrentIndex(0)
             self._refresh_preview_empty_state()
+        elif key == "batch":
+            self.content_stack.setCurrentIndex(2)
+            self.batch_view.set_files(self.files)
         else:
             self.content_stack.setCurrentIndex(1)
             self.tool_header_title.setText(label)
@@ -436,11 +460,16 @@ class MainWindow(QMainWindow):
 
         tools_menu = mb.addMenu("&Tools")
         for key, label, *_rest in NAV_ITEMS:
-            if key == "home":
+            if key in {"home", "batch"}:
                 continue
             a = QAction(label, self)
             a.triggered.connect(lambda _, k=key: self._nav_to(k))
             tools_menu.addAction(a)
+        tools_menu.addSeparator()
+        batch_a = QAction("Batch run…", self)
+        batch_a.setShortcut("Ctrl+B")
+        batch_a.triggered.connect(lambda: self._nav_to("batch"))
+        tools_menu.addAction(batch_a)
 
         help_menu = mb.addMenu("&Help")
         sc = QAction("Keyboard &Shortcuts…", self)
@@ -487,12 +516,19 @@ class MainWindow(QMainWindow):
             self._load_files([Path(p) for p in paths])
 
     def _load_files(self, paths: list[Path]):
+        first_added_row = None
         for path in paths:
             pdf = self._load_with_password(path)
             if pdf:
+                if first_added_row is None:
+                    first_added_row = self.file_list.list.count()
                 self.files.append(pdf)
                 self.file_list.add_file(pdf)
+        self.batch_view.set_files(self.files)
         self._nav_to("home")
+        # Auto-select the first newly added file if nothing is selected yet.
+        if self.current_file is None and first_added_row is not None:
+            self.file_list.list.setCurrentRow(first_added_row)
 
     def _load_with_password(self, path: Path):
         password = None
@@ -520,6 +556,7 @@ class MainWindow(QMainWindow):
         self.files.clear()
         self.file_list._clear_all()
         self.current_file = None
+        self.batch_view.set_files(self.files)
         self._refresh_preview_empty_state()
         self._refresh_tool_preview_empty_state()
         self._update_header()
@@ -540,6 +577,7 @@ class MainWindow(QMainWindow):
 
     def _on_files_reordered(self, files: list[PdfFile]):
         self.files = files
+        self.batch_view.set_files(self.files)
 
     def _current_nav_key(self) -> str | None:
         row = self.sidebar.currentRow()
@@ -550,7 +588,12 @@ class MainWindow(QMainWindow):
 
     # ---------- Operations ----------
     def _run_operation(self, op_name: str, params: dict):
-        if not self.current_file and op_name != "images_to_pdf":
+        # Operations that act on the whole library (or need no library at all).
+        multi_or_fileless = {"images_to_pdf", "merge"}
+        if op_name == "merge" and not self.files:
+            QMessageBox.information(self, "No files", "Add at least one PDF to merge.")
+            return
+        if op_name not in multi_or_fileless and not self.current_file:
             QMessageBox.information(self, "No file", "Please open a PDF first.")
             return
 
@@ -566,8 +609,14 @@ class MainWindow(QMainWindow):
         else:
             worker = PdfWorker(getattr(PdfEngine, op_name), self.current_file, **params)
 
-        worker.signals.finished.connect(lambda r: self._operation_done(r, op_name))
-        worker.signals.error.connect(self._operation_error)
+        worker.setAutoDelete(False)
+        self._active_workers.add(worker)
+
+        def _retire(w=worker):
+            self._active_workers.discard(w)
+
+        worker.signals.finished.connect(lambda r: (self._operation_done(r, op_name), _retire()))
+        worker.signals.error.connect(lambda m: (self._operation_error(m), _retire()))
         self.thread_pool.start(worker)
         self.status.showMessage(f"Running {op_name}…")
 
@@ -580,15 +629,31 @@ class MainWindow(QMainWindow):
                 for pdf in result:
                     self.files.append(pdf)
                     self.file_list.add_file(pdf)
+                self.batch_view.set_files(self.files)
                 self.status.showMessage(f"Split into {len(result)} files", 4000)
             elif op_name == "to_images":
                 self.status.showMessage(f"Exported {len(result)} images", 4000)
         else:
+            # Single-file ops (compress/rotate/watermark/encrypt/decrypt/reorder/merge)
+            # produce a NEW file. Add it to the library if we don't already track it,
+            # then select it so the preview and next op target the fresh output.
+            existing = next((f for f in self.files if f.path == result.path), None)
+            if existing is None:
+                self.files.append(result)
+                self.file_list.add_file(result)
+                self.batch_view.set_files(self.files)
+            else:
+                self.file_list.update_file(result)
             self.current_file = result
-            self.preview.load_pdf(result)
-            self.tool_preview.load_pdf(result)
-            self.file_list.update_file(result)
-            self.status.showMessage(f"✔  {op_name.replace('_',' ').title()} completed", 4000)
+            # Select the output in the list (triggers _on_file_selected -> preview updates)
+            for i in range(self.file_list.list.count()):
+                item = self.file_list.list.item(i)
+                if item.data(Qt.UserRole).path == result.path:
+                    self.file_list.list.setCurrentRow(i)
+                    break
+            self.status.showMessage(
+                f"✔  {op_name.replace('_',' ').title()} saved to {result.path.name}", 5000
+            )
 
         self._update_header()
         self._refresh_preview_empty_state()
