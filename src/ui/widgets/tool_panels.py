@@ -1,4 +1,5 @@
 from pathlib import Path
+import pymupdf as fitz
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QStackedWidget, QLabel, QPushButton,
     QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox, QComboBox,
@@ -10,6 +11,44 @@ from PySide6.QtGui import QColor
 
 from src.core.models import PdfFile
 
+_PERM_PRINT = fitz.PDF_PERM_PRINT | fitz.PDF_PERM_PRINT_HQ
+_PERM_MODIFY = fitz.PDF_PERM_MODIFY
+_PERM_COPY = fitz.PDF_PERM_COPY
+_PERM_ANNOTATE = fitz.PDF_PERM_ANNOTATE
+_PERM_FORM = fitz.PDF_PERM_FORM
+_PERM_ACCESSIBILITY = fitz.PDF_PERM_ACCESSIBILITY
+_PERM_ASSEMBLE = fitz.PDF_PERM_ASSEMBLE
+
+
+def _parse_page_list(text: str, page_count: int, zero_based: bool = False):
+    """Parse '1,3,5-8' into a list of indices. Blank -> None (means all pages).
+
+    With zero_based=False the returned indices are converted to 0-based, which is
+    what the engine expects. With zero_based=True the numbers are taken as-is.
+    """
+    text = (text or "").strip()
+    if not text:
+        return None
+    pages = []
+    for chunk in text.replace(" ", "").split(","):
+        if not chunk:
+            continue
+        if "-" in chunk:
+            start_s, _, end_s = chunk.partition("-")
+            start, end = int(start_s), int(end_s)
+            if end < start:
+                raise ValueError(f"Invalid page range: {chunk}")
+            pages.extend(range(start, end + 1))
+        else:
+            pages.append(int(chunk))
+    if page_count:
+        for p in pages:
+            if p < 1 or p > page_count:
+                raise ValueError(f"Page {p} out of range 1-{page_count}")
+    if zero_based:
+        return pages
+    return [p - 1 for p in pages]
+
 
 class ToolPanelsStack(QWidget):
     operation_requested = Signal(str, dict)
@@ -17,6 +56,7 @@ class ToolPanelsStack(QWidget):
     def __init__(self):
         super().__init__()
         self.current_file: PdfFile = None
+        self._page_count: int = 0
         self._setup_ui()
 
     def _setup_ui(self):
@@ -52,6 +92,7 @@ class ToolPanelsStack(QWidget):
 
     def set_file(self, pdf: PdfFile):
         self.current_file = pdf
+        self._page_count = pdf.page_count if pdf else 0
 
     def show_tool(self, name: str):
         panel = self.panels.get(name.lower())
@@ -125,10 +166,14 @@ class ToolPanelsStack(QWidget):
         self.rotate_degrees = QComboBox()
         self.rotate_degrees.addItems(["90°", "180°", "270°"])
         form.addRow("Rotation:", self.rotate_degrees)
+        self.rotate_pages = QLineEdit()
+        self.rotate_pages.setPlaceholderText("Pages e.g. 1,3,5-8 (blank = all pages)")
+        form.addRow("Pages:", self.rotate_pages)
         layout.addLayout(form)
-        btn = QPushButton("Rotate Selected Pages")
+        btn = QPushButton("Rotate Pages")
         btn.clicked.connect(lambda: self.operation_requested.emit("rotate", {
-            "degrees": int(self.rotate_degrees.currentText().replace("°", ""))
+            "degrees": int(self.rotate_degrees.currentText().replace("°", "")),
+            "page_indices": _parse_page_list(self.rotate_pages.text(), self._page_count),
         }))
         layout.addWidget(btn)
         layout.addStretch()
@@ -138,9 +183,14 @@ class ToolPanelsStack(QWidget):
         w = QWidget()
         layout = QVBoxLayout(w)
         layout.addWidget(QLabel("Reorder Pages"))
-        layout.addWidget(QLabel("Drag to reorder in the Files tab"))
+        self.reorder_order = QLineEdit()
+        self.reorder_order.setPlaceholderText("New page order e.g. 3,1,2 (1-based)")
+        layout.addWidget(self.reorder_order)
+        layout.addWidget(QLabel("Blank keeps the current order."))
         btn = QPushButton("Apply Reorder")
-        btn.clicked.connect(lambda: self.operation_requested.emit("reorder", {}))
+        btn.clicked.connect(lambda: self.operation_requested.emit("reorder", {
+            "new_order": _parse_page_list(self.reorder_order.text(), self._page_count, zero_based=True),
+        }))
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -194,7 +244,13 @@ class ToolPanelsStack(QWidget):
         btn.clicked.connect(lambda: self.operation_requested.emit("encrypt", {
             "user_password": self.enc_user_pw.text(),
             "owner_password": self.enc_owner_pw.text() or None,
-            "permissions": self.enc_perms.currentIndex()
+            "permissions": {
+                0: 0,                                              # nothing allowed
+                1: _PERM_PRINT,                                    # printing only
+                2: _PERM_PRINT | _PERM_MODIFY | _PERM_COPY
+                   | _PERM_ANNOTATE | _PERM_FORM | _PERM_ACCESSIBILITY
+                   | _PERM_ASSEMBLE,                               # everything
+            }[self.enc_perms.currentIndex()],
         }))
         layout.addWidget(btn)
         layout.addStretch()

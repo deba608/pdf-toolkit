@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QFileDialog, QMessageBox, QProgressBar,
     QListWidget, QListWidgetItem, QSplitter, QToolBar, QStatusBar,
-    QMenu, QInputDialog, QComboBox
+    QMenu, QInputDialog, QComboBox, QLineEdit
 )
 from PySide6.QtCore import Qt, QThreadPool, QRunnable, Signal, QObject, QSize
 from PySide6.QtGui import QAction, QIcon, QDragEnterEvent, QDropEvent
@@ -189,12 +189,33 @@ class MainWindow(QMainWindow):
 
     def _load_files(self, paths: list[Path]):
         for path in paths:
-            try:
-                pdf = PdfEngine.load(path)
+            pdf = self._load_with_password(path)
+            if pdf:
                 self.files.append(pdf)
                 self.file_list.add_file(pdf)
+
+    def _load_with_password(self, path: Path) -> PdfFile | None:
+        """Load a PDF, asking for a password up to 3 times if it is encrypted."""
+        password = None
+        for attempt in range(3):
+            try:
+                return PdfEngine.load(path, password)
+            except ValueError as e:
+                if "password" not in str(e).lower():
+                    QMessageBox.warning(self, "Error", f"Failed to load {path.name}: {e}")
+                    return None
+                prompt = "Password required:" if attempt == 0 else "Incorrect password, try again:"
+                password, ok = QInputDialog.getText(
+                    self, f"Encrypted PDF - {path.name}", prompt, QLineEdit.Password
+                )
+                if not ok:
+                    self.status.showMessage(f"Cancelled loading {path.name}", 3000)
+                    return None
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to load {path.name}: {e}")
+                return None
+        QMessageBox.warning(self, "Error", f"Too many incorrect passwords for {path.name}")
+        return None
 
     def _on_file_selected(self, pdf: PdfFile):
         self.current_file = pdf
