@@ -427,7 +427,7 @@ SOFTWARE.
 
 <div align="center">
 
-**Made with ❤️ by Dev (Debashish) for privacy-conscious PDF users everywhere.**
+**Made with ❤️ by <Dev/> for privacy-conscious PDF users everywhere.**
 
 ⭐ **Star this repo** if you find it useful!
 
