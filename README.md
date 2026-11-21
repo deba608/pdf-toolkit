@@ -2,6 +2,8 @@
 
 <div align="center">
 
+<img src="assets/logo.svg" alt="PDF Toolkit logo" width="140" />
+
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/PySide6-6.12-41CD52?style=for-the-badge&logo=qt&logoColor=white)
 ![PyMuPDF](https://img.shields.io/badge/PyMuPDF-1.28-FF6B35?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)
@@ -16,6 +18,10 @@
 </div>
 
 ---
+
+## About
+
+**PDF Toolkit** is an open-source, offline-first desktop PDF utility for Windows, macOS, and Linux. It brings common PDF workflows into one local app: merge, split, rotate, reorder, watermark, encrypt/decrypt, compress, and convert between PDFs and images. Built with Python, PySide6, and PyMuPDF, it keeps documents on your machine with no cloud upload, telemetry, or account requirement.
 
 ## 🎯 Overview
 
