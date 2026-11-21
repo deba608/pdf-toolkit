@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QListWidget, QListWidgetItem, QSplitter, QToolBar, QStatusBar,
     QMenu, QInputDialog, QComboBox, QLineEdit
 )
+from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, QThreadPool, QRunnable, Signal, QObject, QSize
 from PySide6.QtGui import QAction, QIcon, QDragEnterEvent, QDropEvent
 
@@ -145,6 +146,17 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda _, n=name: self._show_tool(n))
             tools_menu.addAction(action)
 
+        # Help menu
+        help_menu = menubar.addMenu("&Help")
+        about_action = QAction("&About", self)
+        about_action.triggered.connect(self._show_about)
+        help_menu.addAction(about_action)
+
+        shortcuts_action = QAction("Keyboard &Shortcuts...", self)
+        shortcuts_action.setShortcut("F1")
+        shortcuts_action.triggered.connect(self._show_shortcuts)
+        help_menu.addAction(shortcuts_action)
+
     def _setup_toolbar(self):
         tb = QToolBar("Main")
         tb.setIconSize(QSize(24, 24))
@@ -260,9 +272,11 @@ class MainWindow(QMainWindow):
                 for pdf in result:
                     self.files.append(pdf)
                     self.file_list.add_file(pdf)
-                self.status.showMessage(f"Split into {len(result)} files", 3000)
+                count = len(result)
+                self.status.showMessage(f"Split into {count} file{'s' if count > 1 else ''}", 3000)
             elif op_name == "to_images":
-                self.status.showMessage(f"Exported {len(result)} images", 3000)
+                count = len(result)
+                self.status.showMessage(f"Exported {count} image{'s' if count > 1 else ''}", 3000)
         else:
             # Single result
             self.current_file = result
@@ -274,7 +288,7 @@ class MainWindow(QMainWindow):
     def _operation_error(self, msg: str):
         self.progress_bar.setVisible(False)
         QMessageBox.critical(self, "Error", msg)
-        self.status.showMessage("Error", 3000)
+        self.status.showMessage(f"Error: {msg[:50]}...", 3000)
 
     def _save_current(self):
         if not self.current_file:
@@ -287,3 +301,35 @@ class MainWindow(QMainWindow):
             import shutil
             shutil.copy2(self.current_file.path, path)
             self.status.showMessage(f"Saved to {path}", 3000)
+
+    def _show_about(self):
+        QMessageBox.about(
+            self,
+            "PDF Toolkit",
+            "<h3>PDF Toolkit v1.0.0</h3>"
+            "<p>Offline PDF manipulation desktop application</p>"
+            "<p>Built with PySide6 and PyMuPDF</p>"
+            "<p>Copyright &copy; 2026</p>"
+        )
+
+    def _show_shortcuts(self):
+        shortcuts = [
+            ("Ctrl+O", "Open PDF files"),
+            ("F1", "Show keyboard shortcuts"),
+            ("Ctrl+S", "Save current PDF"),
+            ("Del", "Delete selected file"),
+            ("Arrow Up/Down", "Move file up/down in list"),
+            ("Ctrl+Left Click", "Select multiple files"),
+            ("Esc", "Clear selection/cancel operation"),
+            ("Shift+Arrow", "Extend selection"),
+        ]
+
+        lines = []
+        for key, desc in shortcuts:
+            lines.append(f"<b>{key}</b>: {desc}")
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Keyboard Shortcuts")
+        dialog.setText("\n".join(lines))
+        dialog.setInformativeText("Press Esc or OK to close")
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.exec()

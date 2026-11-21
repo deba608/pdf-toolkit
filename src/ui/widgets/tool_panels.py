@@ -93,6 +93,30 @@ class ToolPanelsStack(QWidget):
     def set_file(self, pdf: PdfFile):
         self.current_file = pdf
         self._page_count = pdf.page_count if pdf else 0
+        self._update_panel_state()
+
+    def _update_panel_state(self):
+        """Enable/disable tool panel operations based on whether a file is loaded."""
+        has_file = self.current_file is not None
+        # Enable/disable operations that require a file
+        # We'll enable/disable by finding buttons in each panel
+        for i in range(self.stack.count()):
+            panel = self.stack.widget(i)
+            if panel is self.empty:
+                continue
+            # Find enable/disableable buttons
+            for btn in panel.findChildren(QPushButton):
+                txt = btn.text()
+                # Buttons that should be disabled without a file
+                if not has_file:
+                    if txt in {"Rotate Pages", "Apply Reorder", "Add Watermark",
+                              "Encrypt", "Decrypt", "Compress", "Convert",
+                              "Browse"}:
+                        btn.setEnabled(False)
+                else:
+                    if txt in {"Rotate Pages", "Apply Reorder", "Add Watermark",
+                              "Encrypt", "Decrypt", "Compress", "Convert"}:
+                        btn.setEnabled(True)
 
     def show_tool(self, name: str):
         panel = self.panels.get(name.lower())
