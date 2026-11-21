@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
 from src.ui.main_window import MainWindow
+from src.ui.theme import apply_theme
 
 
 def main():
@@ -16,6 +17,8 @@ def main():
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
+
+    apply_theme(app)
 
     window = MainWindow()
     window.show()

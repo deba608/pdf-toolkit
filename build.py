@@ -80,7 +80,7 @@ def build():
         "--name=PDF Toolkit",
         "--onefile",
         "--windowed",
-        "--icon=NONE",
+        "--icon=src/resources/icon.ico",
         "--add-data=src/resources;resources",
         "--hidden-import=PySide6.QtWebEngine",
         "--hidden-import=PySide6.QtWebEngineWidgets",

@@ -246,12 +246,99 @@ class PdfEngine:
         return PdfEngine.load(output_path)
 
     @staticmethod
+    def _analyze_pdf(file: PdfFile) -> dict:
+        """Analyze PDF content to determine optimal optimization settings."""
+        doc = fitz.open(str(file.path))
+        analysis = {
+            "has_images": False,
+            "has_text": False,
+            "image_count": 0,
+            "page_count": doc.page_count,
+            "recommended_quality": 75,
+            "recommended_format": "png",
+        }
+        for i in range(doc.page_count):
+            page = doc[i]
+            text = page.get_text()
+            if text.strip():
+                analysis["has_text"] = True
+            imgs = page.get_images()
+            if imgs:
+                analysis["has_images"] = True
+                analysis["image_count"] += len(imgs)
+
+        # Determine recommendations
+        if analysis["has_images"] and not analysis["has_text"]:
+            # Image-heavy PDF (scanned documents)
+            analysis["recommended_quality"] = 50
+            analysis["recommended_format"] = "pdf"  # keep as PDF
+        elif analysis["has_text"] and not analysis["has_images"]:
+            # Text-heavy PDF
+            analysis["recommended_quality"] = 85
+            analysis["recommended_format"] = "png"
+        elif analysis["has_images"] and analysis["has_text"]:
+            # Mixed content
+            analysis["recommended_quality"] = 70
+            analysis["recommended_format"] = "png"
+        else:
+            # Pure text or empty
+            analysis["recommended_quality"] = 90
+            analysis["recommended_format"] = "png"
+
+        doc.close()
+        return analysis
+
+    @staticmethod
+    def _analyze_pdf(file: PdfFile) -> dict:
+        """Analyze PDF content to determine optimal optimization settings."""
+        doc = fitz.open(str(file.path))
+        analysis = {
+            "has_images": False,
+            "has_text": False,
+            "image_count": 0,
+            "page_count": doc.page_count,
+            "recommended_quality": 75,
+            "recommended_format": "png",
+        }
+        for i in range(doc.page_count):
+            page = doc[i]
+            text = page.get_text()
+            if text.strip():
+                analysis["has_text"] = True
+            imgs = page.get_images()
+            if imgs:
+                analysis["has_images"] = True
+                analysis["image_count"] += len(imgs)
+
+        # Determine recommendations
+        if analysis["has_images"] and not analysis["has_text"]:
+            # Image-heavy PDF (scanned documents)
+            analysis["recommended_quality"] = 50
+        elif analysis["has_text"] and not analysis["has_images"]:
+            # Text-heavy PDF
+            analysis["recommended_quality"] = 85
+        elif analysis["has_images"] and analysis["has_text"]:
+            # Mixed content
+            analysis["recommended_quality"] = 70
+        else:
+            # Pure text or empty
+            analysis["recommended_quality"] = 90
+
+        doc.close()
+        return analysis
+
+    @staticmethod
     def compress(file: PdfFile, output_path: Path = None, quality: int = 75) -> PdfFile:
         if output_path is None:
             output_path = file.path.with_name(f"{file.path.stem}_compressed.pdf")
         doc = fitz.open(str(file.path))
         if file.password:
             doc.authenticate(file.password)
+
+        # Auto-analyze PDF content for optimal quality setting
+        if quality < 0:
+            analysis = PdfEngine._analyze_pdf(file)
+            quality = analysis["recommended_quality"]
 
         # quality is kept for API symmetry; PyMuPDF losslessly cleans/compresses
         doc.save(str(output_path), garbage=4, deflate=True, clean=True)

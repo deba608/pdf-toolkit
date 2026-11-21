@@ -61,7 +61,7 @@ class ToolPanelsStack(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(18, 14, 18, 18)
 
         self.stack = QStackedWidget()
         layout.addWidget(self.stack)
@@ -128,31 +128,44 @@ class ToolPanelsStack(QWidget):
     def _create_merge_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Merge PDFs"))
-        layout.addWidget(QLabel("Add multiple PDFs to the Files tab, then click Merge"))
+        layout.setSpacing(10)
+        hint = QLabel("Open multiple PDFs from the Home view — they will be merged in list order.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color:#9aa1b2;font-size:12px;")
+        layout.addWidget(hint)
 
+        layout.addWidget(self._field_label("Output file"))
         self.merge_out = QLineEdit()
-        self.merge_out.setPlaceholderText("Output PDF path (default: merged.pdf in source folder)")
-        browse = QPushButton("Browse")
+        self.merge_out.setPlaceholderText("Default: merged.pdf next to the first source")
+        browse = QPushButton("Browse…")
         browse.clicked.connect(lambda: self._browse_save(self.merge_out, "PDF Files (*.pdf)"))
         hbox = QHBoxLayout()
         hbox.addWidget(self.merge_out)
         hbox.addWidget(browse)
         layout.addLayout(hbox)
 
-        btn = QPushButton("Merge All Files")
+        btn = QPushButton("Merge PDFs")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("merge", {
             "output_path": Path(self.merge_out.text()) if self.merge_out.text() else None
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
 
+    def _field_label(self, text: str) -> QLabel:
+        lbl = QLabel(text)
+        lbl.setStyleSheet("color:#9aa1b2;font-size:12px;font-weight:500;")
+        return lbl
+
     def _create_split_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Split PDF"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.split_every = QSpinBox()
         self.split_every.setRange(1, 1000)
         self.split_every.setValue(1)
@@ -168,11 +181,14 @@ class ToolPanelsStack(QWidget):
         form.addRow("Output:", hbox)
         layout.addLayout(form)
 
-        btn = QPushButton("Split")
+        btn = QPushButton("Split PDF")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("split", {
             "every": self.split_every.value(),
             "output_dir": Path(self.split_outdir.text()) if self.split_outdir.text() else None
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -185,20 +201,24 @@ class ToolPanelsStack(QWidget):
     def _create_rotate_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Rotate Pages"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.rotate_degrees = QComboBox()
         self.rotate_degrees.addItems(["90°", "180°", "270°"])
         form.addRow("Rotation:", self.rotate_degrees)
         self.rotate_pages = QLineEdit()
-        self.rotate_pages.setPlaceholderText("Pages e.g. 1,3,5-8 (blank = all pages)")
+        self.rotate_pages.setPlaceholderText("e.g. 1,3,5-8  (blank = all pages)")
         form.addRow("Pages:", self.rotate_pages)
         layout.addLayout(form)
         btn = QPushButton("Rotate Pages")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("rotate", {
             "degrees": int(self.rotate_degrees.currentText().replace("°", "")),
             "page_indices": _parse_page_list(self.rotate_pages.text(), self._page_count),
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -206,15 +226,21 @@ class ToolPanelsStack(QWidget):
     def _create_reorder_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Reorder Pages"))
+        layout.setSpacing(10)
+        layout.addWidget(self._field_label("New page order (1-based)"))
         self.reorder_order = QLineEdit()
-        self.reorder_order.setPlaceholderText("New page order e.g. 3,1,2 (1-based)")
+        self.reorder_order.setPlaceholderText("e.g. 3,1,2")
         layout.addWidget(self.reorder_order)
-        layout.addWidget(QLabel("Blank keeps the current order."))
+        hint = QLabel("Leave blank to keep the current order.")
+        hint.setStyleSheet("color:#6b7284;font-size:11px;")
+        layout.addWidget(hint)
         btn = QPushButton("Apply Reorder")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("reorder", {
             "new_order": _parse_page_list(self.reorder_order.text(), self._page_count, zero_based=True),
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -222,8 +248,9 @@ class ToolPanelsStack(QWidget):
     def _create_watermark_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Add Watermark"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.wm_text = QLineEdit()
         self.wm_text.setPlaceholderText("CONFIDENTIAL")
         form.addRow("Text:", self.wm_text)
@@ -238,11 +265,14 @@ class ToolPanelsStack(QWidget):
         form.addRow("Font Size:", self.wm_size)
         layout.addLayout(form)
         btn = QPushButton("Add Watermark")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("add_watermark", {
             "text": self.wm_text.text(),
             "opacity": self.wm_opacity.value(),
             "font_size": self.wm_size.value()
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -250,8 +280,9 @@ class ToolPanelsStack(QWidget):
     def _create_encrypt_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Encrypt PDF"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.enc_user_pw = QLineEdit()
         self.enc_user_pw.setEchoMode(QLineEdit.Password)
         self.enc_user_pw.setPlaceholderText("User password (required)")
@@ -264,7 +295,9 @@ class ToolPanelsStack(QWidget):
         self.enc_perms.addItems(["No permissions (print/copy/edit denied)", "Allow printing", "Allow all"])
         form.addRow("Permissions:", self.enc_perms)
         layout.addLayout(form)
-        btn = QPushButton("Encrypt")
+        btn = QPushButton("Encrypt PDF")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("encrypt", {
             "user_password": self.enc_user_pw.text(),
             "owner_password": self.enc_owner_pw.text() or None,
@@ -276,6 +309,7 @@ class ToolPanelsStack(QWidget):
                    | _PERM_ASSEMBLE,                               # everything
             }[self.enc_perms.currentIndex()],
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -283,17 +317,21 @@ class ToolPanelsStack(QWidget):
     def _create_decrypt_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Decrypt PDF"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.dec_pw = QLineEdit()
         self.dec_pw.setEchoMode(QLineEdit.Password)
         self.dec_pw.setPlaceholderText("Enter password")
         form.addRow("Password:", self.dec_pw)
         layout.addLayout(form)
-        btn = QPushButton("Decrypt")
+        btn = QPushButton("Decrypt PDF")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("decrypt", {
             "password": self.dec_pw.text()
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -301,17 +339,25 @@ class ToolPanelsStack(QWidget):
     def _create_compress_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Compress PDF"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.comp_quality = QSpinBox()
         self.comp_quality.setRange(10, 100)
         self.comp_quality.setValue(75)
         form.addRow("Image Quality (%):", self.comp_quality)
         layout.addLayout(form)
-        btn = QPushButton("Compress")
+        hint = QLabel("Cleans and re-compresses the PDF using lossless optimization.")
+        hint.setStyleSheet("color:#6b7284;font-size:11px;")
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        btn = QPushButton("Compress PDF")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("compress", {
             "quality": self.comp_quality.value()
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -319,8 +365,9 @@ class ToolPanelsStack(QWidget):
     def _create_to_images_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Convert to Images"))
+        layout.setSpacing(10)
         form = QFormLayout()
+        form.setSpacing(10)
         self.img_dpi = QSpinBox()
         self.img_dpi.setRange(72, 600)
         self.img_dpi.setValue(200)
@@ -339,12 +386,15 @@ class ToolPanelsStack(QWidget):
         form.addRow("Output:", hbox)
         layout.addLayout(form)
 
-        btn = QPushButton("Convert")
+        btn = QPushButton("Export Images")
+        btn.setObjectName("Primary")
+        btn.setMinimumHeight(36)
         btn.clicked.connect(lambda: self.operation_requested.emit("to_images", {
             "dpi": self.img_dpi.value(),
             "fmt": self.img_format.currentText().lower(),
             "output_dir": Path(self.img_outdir.text()) if self.img_outdir.text() else None
         }))
+        layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -352,8 +402,8 @@ class ToolPanelsStack(QWidget):
     def _create_images_to_pdf_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.addWidget(QLabel("Images to PDF"))
-        layout.addWidget(QLabel("Select image files:"))
+        layout.setSpacing(10)
+        layout.addWidget(self._field_label("Images"))
         self.img_list = QListWidget()
         self.img_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         layout.addWidget(self.img_list)
@@ -376,6 +426,8 @@ class ToolPanelsStack(QWidget):
         layout.addLayout(hbox)
 
         convert_btn = QPushButton("Create PDF")
+        convert_btn.setObjectName("Primary")
+        convert_btn.setMinimumHeight(36)
         convert_btn.clicked.connect(lambda: self.operation_requested.emit("images_to_pdf", {
             "image_paths": [Path(self.img_list.item(i).text()) for i in range(self.img_list.count())],
             "output_path": Path(self.img2pdf_out.text()) if self.img2pdf_out.text() else None

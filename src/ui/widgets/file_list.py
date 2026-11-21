@@ -21,21 +21,16 @@ class FileListWidget(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-
-        # Header
-        header = QHBoxLayout()
-        header.addWidget(QLabel("PDF Files"))
-        header.addStretch()
-        clear_btn = QPushButton("Clear All")
-        clear_btn.clicked.connect(self._clear_all)
-        header.addWidget(clear_btn)
-        layout.addLayout(header)
+        layout.setSpacing(0)
 
         # List
         self.list = QListWidget()
+        self.list.setObjectName("FileList")
         self.list.setDragDropMode(QListWidget.InternalMove)
         self.list.setDefaultDropAction(Qt.MoveAction)
         self.list.setSelectionMode(QListWidget.SingleSelection)
+        from PySide6.QtWidgets import QFrame
+        self.list.setFrameShape(QFrame.NoFrame)
         self.list.currentItemChanged.connect(self._on_selection_changed)
         self.list.model().rowsMoved.connect(self._on_rows_moved)
         self.list.setContextMenuPolicy(Qt.CustomContextMenu)
