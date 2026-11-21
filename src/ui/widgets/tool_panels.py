@@ -65,8 +65,20 @@ class ToolPanelsStack(QWidget):
         layout = QVBoxLayout(w)
         layout.addWidget(QLabel("Merge PDFs"))
         layout.addWidget(QLabel("Add multiple PDFs to the Files tab, then click Merge"))
+
+        self.merge_out = QLineEdit()
+        self.merge_out.setPlaceholderText("Output PDF path (default: merged.pdf in source folder)")
+        browse = QPushButton("Browse")
+        browse.clicked.connect(lambda: self._browse_save(self.merge_out, "PDF Files (*.pdf)"))
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.merge_out)
+        hbox.addWidget(browse)
+        layout.addLayout(hbox)
+
         btn = QPushButton("Merge All Files")
-        btn.clicked.connect(lambda: self.operation_requested.emit("merge", {}))
+        btn.clicked.connect(lambda: self.operation_requested.emit("merge", {
+            "output_path": Path(self.merge_out.text()) if self.merge_out.text() else None
+        }))
         layout.addWidget(btn)
         layout.addStretch()
         return w
@@ -236,11 +248,22 @@ class ToolPanelsStack(QWidget):
         self.img_format = QComboBox()
         self.img_format.addItems(["PNG", "JPG"])
         form.addRow("Format:", self.img_format)
+
+        self.img_outdir = QLineEdit()
+        self.img_outdir.setPlaceholderText("Output folder (default: same as source)")
+        browse = QPushButton("Browse")
+        browse.clicked.connect(lambda: self._browse_dir(self.img_outdir))
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.img_outdir)
+        hbox.addWidget(browse)
+        form.addRow("Output:", hbox)
         layout.addLayout(form)
+
         btn = QPushButton("Convert")
         btn.clicked.connect(lambda: self.operation_requested.emit("to_images", {
             "dpi": self.img_dpi.value(),
-            "fmt": self.img_format.currentText().lower()
+            "fmt": self.img_format.currentText().lower(),
+            "output_dir": Path(self.img_outdir.text()) if self.img_outdir.text() else None
         }))
         layout.addWidget(btn)
         layout.addStretch()
@@ -262,13 +285,29 @@ class ToolPanelsStack(QWidget):
         btns.addWidget(add_btn)
         btns.addWidget(clear_btn)
         layout.addLayout(btns)
+
+        self.img2pdf_out = QLineEdit()
+        self.img2pdf_out.setPlaceholderText("Output PDF path")
+        browse = QPushButton("Browse")
+        browse.clicked.connect(lambda: self._browse_save(self.img2pdf_out, "PDF Files (*.pdf)"))
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.img2pdf_out)
+        hbox.addWidget(browse)
+        layout.addLayout(hbox)
+
         convert_btn = QPushButton("Create PDF")
         convert_btn.clicked.connect(lambda: self.operation_requested.emit("images_to_pdf", {
-            "images": [self.img_list.item(i).text() for i in range(self.img_list.count())]
+            "image_paths": [Path(self.img_list.item(i).text()) for i in range(self.img_list.count())],
+            "output_path": Path(self.img2pdf_out.text()) if self.img2pdf_out.text() else None
         }))
         layout.addWidget(convert_btn)
         layout.addStretch()
         return w
+
+    def _browse_save(self, line_edit: QLineEdit, filter_str: str):
+        path, _ = QFileDialog.getSaveFileName(self, "Save As", "", filter_str)
+        if path:
+            line_edit.setText(path)
 
     def _add_images(self):
         paths, _ = QFileDialog.getOpenFileNames(

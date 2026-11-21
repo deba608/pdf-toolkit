@@ -37,7 +37,9 @@ class PdfEngine:
         return pdf_file
 
     @staticmethod
-    def merge(files: List[PdfFile], output_path: Path) -> PdfFile:
+    def merge(files: List[PdfFile], output_path: Path = None) -> PdfFile:
+        if output_path is None:
+            output_path = files[0].path.parent / "merged.pdf"
         merged = fitz.open()
         for pf in files:
             doc = fitz.open(str(pf.path))
@@ -224,8 +226,10 @@ class PdfEngine:
         return thumb
 
     @staticmethod
-    def split_by_pages(file: PdfFile, every: int, output_dir: Path) -> List[PdfFile]:
+    def split_by_pages(file: PdfFile, every: int, output_dir: Path = None) -> List[PdfFile]:
         """Split PDF into multiple files, each with 'every' pages."""
+        if output_dir is None:
+            output_dir = file.path.parent
         ranges = []
         for i in range(0, file.page_count, every):
             ranges.append((i, min(i + every - 1, file.page_count - 1)))
