@@ -210,25 +210,45 @@ class MainWindow(QMainWindow):
         self.tool_panels.show_tool(name.lower())
 
     def _run_operation(self, op_name: str, params: dict):
-        if not self.current_file:
+        if not self.current_file and op_name != "images_to_pdf":
             return
 
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        worker = PdfWorker(getattr(PdfEngine, op_name), self.current_file, **params)
+        if op_name == "merge":
+            worker = PdfWorker(PdfEngine.merge, self.files, **params)
+        elif op_name == "split":
+            worker = PdfWorker(PdfEngine.split_by_pages, self.current_file, **params)
+        elif op_name == "images_to_pdf":
+            worker = PdfWorker(PdfEngine.images_to_pdf, **params)
+        else:
+            worker = PdfWorker(getattr(PdfEngine, op_name), self.current_file, **params)
+
         worker.signals.progress.connect(self.progress_bar.setValue)
         worker.signals.finished.connect(lambda r: self._operation_done(r, op_name))
         worker.signals.error.connect(self._operation_error)
         self.thread_pool.start(worker)
 
-    def _operation_done(self, result: PdfFile, op_name: str):
+    def _operation_done(self, result, op_name: str):
         self.progress_bar.setVisible(False)
-        self.current_file = result
-        self.preview.load_pdf(result)
-        self.tool_preview.load_pdf(result)
-        self.file_list.update_file(result)
-        self.status.showMessage(f"{op_name} completed", 3000)
+
+        if isinstance(result, list):
+            # Multiple results (split, to_images)
+            if op_name == "split":
+                for pdf in result:
+                    self.files.append(pdf)
+                    self.file_list.add_file(pdf)
+                self.status.showMessage(f"Split into {len(result)} files", 3000)
+            elif op_name == "to_images":
+                self.status.showMessage(f"Exported {len(result)} images", 3000)
+        else:
+            # Single result
+            self.current_file = result
+            self.preview.load_pdf(result)
+            self.tool_preview.load_pdf(result)
+            self.file_list.update_file(result)
+            self.status.showMessage(f"{op_name} completed", 3000)
 
     def _operation_error(self, msg: str):
         self.progress_bar.setVisible(False)

@@ -222,3 +222,11 @@ class PdfEngine:
         thumb = pix.tobytes("png")
         doc.close()
         return thumb
+
+    @staticmethod
+    def split_by_pages(file: PdfFile, every: int, output_dir: Path) -> List[PdfFile]:
+        """Split PDF into multiple files, each with 'every' pages."""
+        ranges = []
+        for i in range(0, file.page_count, every):
+            ranges.append((i, min(i + every - 1, file.page_count - 1)))
+        return PdfEngine.split(file, ranges, output_dir)
