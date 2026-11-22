@@ -5,10 +5,8 @@ REM Usage:
 REM   rebuild.bat           Fast incremental dev build (onedir, cache reused).
 REM   rebuild.bat release   Full one-file release build (slow, distributable).
 REM
-REM The fast path keeps build\ and dist\ between runs so PyInstaller reuses
-REM its analysis and binary caches. First run is ~normal speed; subsequent
-REM runs are typically many times faster because only changed modules are
-REM re-analyzed and nothing is recompressed.
+REM Fast mode uses a frozen .spec file for true incremental builds (~2s).
+REM Release mode uses build.py for a full clean one-file build.
 
 cd /d "%~dp0"
 
@@ -25,16 +23,25 @@ if /I "%MODE%"=="release" (
     if exist build rmdir /s /q build
     if exist dist rmdir /s /q dist
 ) else (
-    echo [1/3] Keeping build\ cache for incremental build...
-    REM Only remove stale exe and PyInstaller's spec from a prior release,
-    REM so the onedir output lands cleanly. Leave build\ alone so caches
-    REM can be reused.
-    if exist "dist\PDF Toolkit.exe" del /q "dist\PDF Toolkit.exe"
+    echo [1/3] Fast incremental build (frozen spec^)
+    REM Windows locks DLLs from recent runs. Rename old dir (works even when locked).
+    if exist "dist\PDF Toolkit" (
+        echo [CLEAN] Moving dist\PDF Toolkit to dist\PDF Toolkit.old...
+        move /y "dist\PDF Toolkit" "dist\PDF Toolkit.old" >nul
+    )
+    REM Clean up old dirs from previous runs (best effort)
+    for /d %%d in ("dist\PDF Toolkit.old*") do rmdir /s /q "%%d" 2>nul
 )
 
 set START_TIME=%TIME%
-echo [2/3] Building with PyInstaller (%MODE%)...
-python build.py --%MODE%
+echo [2/3] Building...
+
+if /I "%MODE%"=="release" (
+    python build.py --release
+) else (
+    python -m PyInstaller -y "PDF Toolkit.spec"
+)
+
 if errorlevel 1 (
     echo.
     echo [3/3] Build FAILED - check output above
