@@ -52,47 +52,38 @@ PDF Toolkit is a **completely offline** desktop application built with Python, Q
 ### 🎨 Content & Appearance
 | Feature | Description |
 |---------|-------------|
-| **Watermark** | Add customizable text watermarks (opacity, font size, color, position) |
-| **Page Numbers** | Add Bates-style numbering with prefixes/suffixes |
-| **Headers/Footers** | Custom text, dates, page numbers on every page |
+| **Watermark** | Add customizable text watermarks (opacity, font size, colour) |
 
 ### 🔒 Security
 | Feature | Description |
 |---------|-------------|
 | **Encrypt** | AES-256 encryption with user/owner passwords |
-| **Permissions** | Granular control: print, copy, modify, annotate, form filling, accessibility |
+| **Permissions** | Control printing, copying, editing, annotating, form filling, accessibility |
 | **Decrypt** | Remove passwords and restrictions (with valid password) |
 
 ### 📦 Optimization & Conversion
 | Feature | Description |
 |---------|-------------|
-| **Compress** | Reduce file size via image downsampling, deduplication, garbage collection |
-| **Linearize** | Fast web view (byte-serving) for large PDFs |
+| **Compress** | Image downsampling/re-encoding plus lossless cleanup |
 | **PDF → Images** | Export pages as PNG/JPG at configurable DPI (72–600) |
 | **Images → PDF** | Combine multiple images (PNG, JPG, BMP, TIFF) into a PDF |
+| **Batch run** | Apply one operation to every loaded PDF with per-file status |
 | **OCR** *(planned)* | Make scanned PDFs searchable with Tesseract |
 
 ### 🖥️ User Experience
-- **Dark/Light themes** with system preference detection
-- **Drag & drop** files directly into the window
+- **Dark theme** designed for long sessions
+- **Drag & drop** files directly into the window, drag to reorder
+- **Native PDF preview** (QtPdf) — offline, zoomable, password-aware
 - **Keyboard shortcuts** for power users
 - **Progress tracking** for long-running operations
-- **Recent files** with quick access
-- **Multi-language** support (extensible i18n)
+- **Background threading** so the UI never blocks
 
 ---
 
 ## 📸 Screenshots
 
-> **Note**: Screenshots will be added after first release. The UI follows modern Qt Material design principles.
-
-| Files Tab | Tools Tab | Merge Panel | Split Panel |
-|-----------|-----------|-------------|-------------|
-| ![Files](docs/screenshots/files-tab.png) | ![Tools](docs/screenshots/tools-tab.png) | ![Merge](docs/screenshots/merge.png) | ![Split](docs/screenshots/split.png) |
-
-| Encrypt Panel | Compress Panel | Preview | Dark Mode |
-|---------------|----------------|---------|-----------|
-| ![Encrypt](docs/screenshots/encrypt.png) | ![Compress](docs/screenshots/compress.png) | ![Preview](docs/screenshots/preview.png) | ![Dark](docs/screenshots/dark.png) |
+> Screenshots are not committed yet. Run the app to see the Home, Tools, and
+> Batch views; the UI uses a single dark theme with a sidebar and card layout.
 
 ---
 
@@ -141,23 +132,23 @@ Download the latest release from the [Releases page](https://github.com/deba608/
 ### Quick Start
 1. **Launch** the application
 2. **Drag & drop** one or more PDF files into the window (or use `Ctrl+O`)
-3. **Select** a tool from the **Tools** tab or **Tools** menu
+3. **Select** a tool from the sidebar or the **Tools** menu
 4. **Configure** parameters in the left panel
 5. **Click** the action button (Merge, Split, Encrypt, etc.)
-6. **Save** the result via `Ctrl+S` or the toolbar
+6. The result is added to the library and selected — use **Save As…** for a copy
 
 ### Keyboard Shortcuts
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+O` | Open PDF(s) |
-| `Ctrl+S` | Save current document |
-| `Ctrl+Shift+S` | Save As... |
-| `Ctrl+W` | Close current tab |
-| `Ctrl+Q` / `Ctrl+F4` | Quit application |
-| `F11` | Toggle fullscreen |
-| `Ctrl++` / `Ctrl+-` | Zoom in/out (preview) |
-| `Ctrl+0` | Reset zoom |
-| `Delete` | Remove selected file from list |
+| `Ctrl+S` | Save a copy of the selected PDF |
+| `Ctrl+Shift+S` | Save a copy (same dialog) |
+| `Ctrl+B` | Open batch processing |
+| `Ctrl++` / `Ctrl+-` | Zoom preview in/out |
+| `Ctrl+0` | Reset preview zoom |
+| `Delete` | Remove selected file from the library |
+| `F1` | Show the shortcut list |
+| `Ctrl+Q` | Quit application |
 
 ### Common Workflows
 

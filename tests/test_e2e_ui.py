@@ -192,6 +192,29 @@ def main():
         return f"{r.page_count} pages"
     check("images_to_pdf", t_images_to_pdf)
 
+    # batch run (own thread pool + result plumbing back into the library)
+    def t_batch():
+        outdir = tmp / "ui_batch"
+        outdir.mkdir(exist_ok=True)
+        bv = win.batch_view
+        win._nav_to("batch")
+        bv.set_files(win.files[:1])
+        bv.op_combo.setCurrentIndex(0)  # compress
+        bv.out_dir.setText(str(outdir))
+        produced = []
+        bv.files_produced.connect(produced.extend)
+        bv._run()
+        for _ in range(3000):
+            app.processEvents()
+            if produced:
+                break
+            QThreadPool.globalInstance().waitForDone(10)
+        assert produced, "batch run produced no files"
+        assert all(Path(p.path).exists() for p in produced)
+        bv.set_files(win.files)
+        return f"{len(produced)} file(s) added back to the library"
+    check("batch", t_batch)
+
     print()
     passed = sum(1 for v in results.values() if v)
     total = len(results)

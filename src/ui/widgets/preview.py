@@ -95,14 +95,21 @@ class PreviewWidget(QWidget):
         self.view.pageNavigator().jump(page, QPointF(), self.view.zoomFactor())
 
     def zoom_in(self):
+        self._sync_zoom_from_view()
         self._set_zoom(self._zoom * 1.2)
 
     def zoom_out(self):
+        self._sync_zoom_from_view()
         self._set_zoom(self._zoom / 1.2)
 
     def reset_zoom(self):
         self._zoom = 1.0
         self.view.setZoomMode(QPdfView.ZoomMode.FitToWidth)
+
+    def _sync_zoom_from_view(self):
+        if self.view.zoomMode() != QPdfView.ZoomMode.Custom:
+            # Fit-to-width has no fixed factor; start from 1.0 on first zoom.
+            self._zoom = self.view.zoomFactor() or 1.0
 
     def _set_zoom(self, factor: float):
         self._zoom = max(0.25, min(4.0, factor))

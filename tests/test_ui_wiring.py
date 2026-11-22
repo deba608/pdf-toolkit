@@ -67,12 +67,8 @@ def main():
         stack.show_tool(tool)
         panel = stack.stack.currentWidget()
 
-        buttons = [b for b in panel.findChildren(QPushButton) if b.isEnabled()]
-        if not buttons:
-            failures.append(f"{tool}: no button found")
-            continue
-
-        # Fill required inputs so the payload is realistic
+        # Fill required inputs first: buttons can be disabled until the panel
+        # has enough input (e.g. "Create PDF" needs at least one image).
         if tool == "watermark":
             stack.wm_text.setText("CONFIDENTIAL")
         if tool == "encrypt":
@@ -83,8 +79,14 @@ def main():
             stack.reorder_order.setText("3,1,2")
         if tool == "images to pdf":
             stack.img_list.addItem(str(png_path))
+        app.processEvents()
 
-        target = buttons[-1] if tool not in ("images to pdf",) else buttons[-1]
+        buttons = [b for b in panel.findChildren(QPushButton) if b.isEnabled()]
+        if not buttons:
+            failures.append(f"{tool}: no button found")
+            continue
+
+        target = buttons[-1]
         target.click()
         app.processEvents()
 
@@ -105,8 +107,13 @@ def main():
         try:
             sig = inspect.signature(fn)
             sig.bind(*args, **params)
+            if tool == "reorder":
+                order = params["new_order"]
+                assert all(0 <= i < stack.current_file.page_count for i in order), (
+                    f"reorder produced out-of-range indices {order}"
+                )
             print(f"  [PASS] {tool:14s} -> {engine_name}{_fmt(params)}")
-        except TypeError as e:
+        except (TypeError, AssertionError) as e:
             failures.append(f"{tool} -> {engine_name}: {e}")
             print(f"  [FAIL] {tool:14s} -> {engine_name}: {e}")
 

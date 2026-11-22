@@ -642,7 +642,9 @@ class MainWindow(QMainWindow):
         self.files = list(files)
         self.batch_view.set_files(self.files)
         # The selected file may have been removed from the library.
-        if self.current_file is not None and self.current_file not in self.files:
+        if self.current_file is not None and not any(
+            f.path.resolve() == self.current_file.path.resolve() for f in self.files
+        ):
             self.current_file = None
             self.preview.load_pdf(None)
             self.tool_preview.load_pdf(None)
@@ -697,11 +699,20 @@ class MainWindow(QMainWindow):
             self._active_workers.discard(w)
 
         worker.signals.finished.connect(
-            lambda r: (self._operation_done(r, op_name), _retire())
+            lambda r: (self._worker_finished(r, op_name), _retire())
         )
-        worker.signals.error.connect(lambda m: (self._operation_error(m), _retire()))
+        worker.signals.error.connect(lambda m: (self._worker_finished(m, op_name, True), _retire()))
         self.thread_pool.start(worker)
         self.status.showMessage(f"Running {op_name.replace('_', ' ')}…")
+
+    def _worker_finished(self, payload, op_name: str, failed: bool = False):
+        # Always clear the busy state here (not inside the handlers), so a
+        # handler that raises or is replaced still leaves the UI usable.
+        self._set_busy(False)
+        if failed:
+            self._operation_error(payload)
+        else:
+            self._operation_done(payload, op_name)
 
     def _no_file(self):
         QMessageBox.information(self, "No file", "Please open a PDF first.")

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal, QPoint
-from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFrame, QListWidget, QListWidgetItem, QMenu, QVBoxLayout, QWidget
 )
@@ -34,11 +33,6 @@ class FileListWidget(QWidget):
         self.list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self._show_context_menu)
         layout.addWidget(self.list)
-
-        # README promises Delete = remove selected file.
-        self._delete_shortcut = QShortcut(QKeySequence.Delete, self.list)
-        self._delete_shortcut.setContext(Qt.WidgetWithChildrenShortcut)
-        self._delete_shortcut.activated.connect(self.remove_current)
 
     # ---------- data ----------
     @property
