@@ -119,9 +119,11 @@ Download the latest release from the [Releases page](https://github.com/deba608/
 
 | Platform | File | Size |
 |----------|------|------|
-| Windows x64 | `PDF_Toolkit_Windows_x64.exe` | ~65 MB |
-| macOS (Apple Silicon) | `PDF_Toolkit_macOS_arm64.dmg` | ~70 MB |
-| Linux x64 | `PDF_Toolkit_Linux_x64.AppImage` | ~75 MB |
+| Windows x64 | `PDF Toolkit.exe` (release) or `PDF Toolkit/` folder (fast build) | ~40–70 MB |
+
+Only Windows binaries are produced by `build.py` today. The source runs
+anywhere PySide6 and PyMuPDF are available; macOS/Linux packaging is not
+set up yet.
 
 > **Windows SmartScreen**: Since the app isn't code-signed, you may see "Windows protected your PC". Click "More info" → "Run anyway". This is normal for open-source unsigned binaries.
 
@@ -310,22 +312,22 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ### Development Setup
 ```bash
-# Install dev dependencies
-pip install -r requirements-dev.txt
+# Runtime dependencies only (there is no separate dev requirements file)
+pip install -r requirements.txt
 
-# Install pre-commit hooks
-pre-commit install
+# Optional: PyInstaller, needed only for packaging
+pip install pyinstaller
 
-# Run linting
-ruff check src/
-black src/
-mypy src/
+# Run the test suite (headless)
+$env:QT_QPA_PLATFORM="offscreen"
+.venv\Scripts\python.exe tests\test_all_features.py
+.venv\Scripts\python.exe tests\test_e2e_ui.py
 ```
 
 ### Code Style
-- **Formatting**: Black (line length 100)
-- **Linting**: Ruff
-- **Type Hints**: Required for all public APIs (mypy strict)
+- **Formatting**: 4-space indent, ~100 character lines
+- **Imports**: standard library, third-party, then `src.*`
+- **Type Hints**: on public engine methods and widget signals
 - **Commits**: Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, etc.)
 
 ---
