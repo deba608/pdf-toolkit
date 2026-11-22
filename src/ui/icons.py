@@ -28,8 +28,8 @@ def get_icon(name: str, color: str = TEXT_MUTED, size: int = 20) -> QIcon:
     pix_normal = _render_symbol(name, color, size)
     icon.addPixmap(pix_normal, QIcon.Normal, QIcon.Off)
 
-    # Active / Selected state (Supabase emerald accent)
-    pix_active = _render_symbol(name, ACCENT, size)
+    # Active / Selected state (Vite electric indigo)
+    pix_active = _render_symbol(name, "#747bff", size)
     icon.addPixmap(pix_active, QIcon.Active, QIcon.Off)
     icon.addPixmap(pix_active, QIcon.Selected, QIcon.Off)
 

@@ -1,88 +1,93 @@
 """Design tokens and QSS stylesheet for the PDF Toolkit UI.
 
-Supabase Design Language (supabase.com):
-- Clean white-and-near-black system with minimal chrome.
-- Single signature emerald-green CTA (#3ecf8e) with near-black text (#171717).
-- Humanist sans display tier (Inter / Segoe UI / Circular fallback) at weight 500.
-- Calibrated grey ladder from #ededed (hairline-cool) to #171717 (ink).
-- Tight 6px / 8px radii (square-ish, technical, never pill-shaped).
-- Code & preview workbench rendered in deep canvas-night (#1c1c1c).
+Vite Design Language (vite.dev):
+- Deep dark charcoal & obsidian surfaces: #1b1b1f (canvas), #161618 (alt), #202127 (elv), #252529 (soft).
+- Electric indigo brand CTA: #646cff, hover #747bff, active #535bf2.
+- Vibrant purple-to-cyan gradient accents: #bd34fe (purple) to #41d1ff (cyan).
+- Translucent hairlines: rgba(82, 82, 89, 0.48) and #2e2e32.
+- High-contrast crisp typography: rgba(255, 255, 245, 0.88) on Inter font stack.
+- Tight 8px / 12px radii with clean developer-focused minimalism.
 """
 
 # ==============================================================================
-# Supabase Design Tokens
+# Vite Design Tokens (vite.dev)
 # ==============================================================================
 
 # Brand & Accent
-PRIMARY = "#3ecf8e"             # Signature CTA emerald green
-PRIMARY_DEEP = "#24b47e"        # Pressed state
-PRIMARY_SOFT = "#4ade80"        # Hover / accent highlight
-ON_PRIMARY = "#171717"          # Near-black on green (the button reads as "lit" with dark type)
-ON_DARK = "#ffffff"             # Text on canvas-night surfaces
+PRIMARY = "#646cff"             # Electric Indigo (Vite brand CTA)
+PRIMARY_HOVER = "#747bff"       # Hover state
+PRIMARY_ACTIVE = "#535bf2"      # Pressed / active state
+PRIMARY_SOFT = "rgba(100, 108, 255, 0.16)" # Active nav items, chips, focus rings
 
-# Text
-INK = "#171717"                 # Default body / heading text (near-black, never pure black)
-INK_SECONDARY = "#212121"       # Body emphasis
-INK_MUTE = "#707070"            # Secondary text and helper copy
-INK_MUTE_2 = "#9a9a9a"          # Tertiary text / placeholders
-INK_FAINT = "#b2b2b2"           # Disabled text / subtle hints
+ACCENT_PURPLE = "#bd34fe"       # Vite lightning electric purple
+ACCENT_CYAN = "#41d1ff"         # Vite lightning electric cyan
 
-# Surface
-CANVAS = "#ffffff"              # Default page background (pure white)
-CANVAS_SOFT = "#fafafa"         # Alternating section bands / secondary surface
-CANVAS_NIGHT = "#1c1c1c"        # Deep near-black used in code blocks / preview backdrop
-CANVAS_NIGHT_SOFT = "#202020"   # Nested night chrome
+# Surfaces (VitePress Dark Palette)
+CANVAS = "#1b1b1f"              # Main window surface (charcoal)
+CANVAS_ALT = "#161618"          # Deeper surface (sidebar, toolbars, view canvas)
+CANVAS_ELV = "#202127"          # Elevated container cards, dialogs
+CANVAS_SOFT = "#252529"         # Secondary inputs, controls, chips
+CANVAS_MUTE = "#2e2e32"         # Hover surface
 
-# Hairlines & Borders
-HAIRLINE = "#dfdfdf"            # 1px borders on cards and tables
-HAIRLINE_STRONG = "#c7c7c7"     # Slightly darker border for form inputs & buttons
-HAIRLINE_COOL = "#ededed"       # Grey ladder fine chrome / subtle dividers
-HAIRLINE_COOL_2 = "#efefef"
-HAIRLINE_COOL_3 = "#d4d4d4"
+# Borders & Hairlines
+BORDER = "rgba(82, 82, 89, 0.48)"     # Standard element borders
+BORDER_SUBTLE = "rgba(82, 82, 89, 0.28)" # Hairline dividers, subtle frames
+BORDER_SOFT = "#2e2e32"               # Container border
+BORDER_FOCUS = "#646cff"              # Focus ring
 
-# Semantic Accents (reserved for status indicators / badges)
-DANGER = "#ff2201"              # Accent Tomato
-DANGER_BG = "rgba(255, 34, 1, 0.08)"
-SUCCESS = "#3ecf8e"             # Primary Emerald
-SUCCESS_BG = "rgba(62, 207, 142, 0.12)"
-WARN = "#ffdb13"                # Accent Yellow
-WARN_BG = "rgba(255, 219, 19, 0.12)"
-ACCENT_PURPLE = "#6b01c2"
-ACCENT_VIOLET = "#644fc1"
+# Typography & Text Colors
+TEXT_1 = "rgba(255, 255, 245, 0.88)" # Primary text (headings, high-emphasis)
+TEXT_2 = "rgba(235, 235, 245, 0.60)" # Secondary text, subtitles, helper copy
+TEXT_3 = "rgba(235, 235, 245, 0.38)" # Tertiary text, placeholders, disabled
 
-# Radii (tight 6px / 8px button radii - square-ish, technical)
+# Semantic Accents
+DANGER = "#f43f5e"              # Rose / destructive
+DANGER_BG = "rgba(244, 63, 94, 0.12)"
+SUCCESS = "#10b981"             # Emerald green status
+SUCCESS_BG = "rgba(16, 185, 129, 0.12)"
+WARN = "#f59e0b"                # Amber warning
+WARN_BG = "rgba(245, 158, 11, 0.12)"
+
+# Corner Radii
 RADIUS_XS = 4
-RADIUS_SM = 6                   # Signature button and input radius
-RADIUS_MD = 8                   # Compact cards, alerts
-RADIUS_LG = 12                  # Feature cards, containers, dialogs
-RADIUS_XL = 16
-RADIUS_FULL = 9999              # Pill tags, badges
+RADIUS_SM = 6
+RADIUS_MD = 8                   # Buttons, form controls, chips
+RADIUS_LG = 12                  # Cards, containers, modals
+RADIUS_FULL = 9999              # Badges, pills
 
-# Backward-compatibility token aliases so existing imports work seamlessly
-BG_0 = CANVAS                   # #ffffff
-BG_1 = CANVAS_SOFT              # #fafafa
-BG_2 = CANVAS                   # #ffffff
-BG_3 = "#f2f2f2"                # hover surface
-BORDER = HAIRLINE               # #dfdfdf
-BORDER_STRONG = HAIRLINE_STRONG # #c7c7c7
-TEXT = INK                     # #171717
-TEXT_MUTED = INK_MUTE           # #707070
-TEXT_FAINT = INK_FAINT          # #b2b2b2
-ACCENT = PRIMARY                # #3ecf8e
-ACCENT_HOVER = PRIMARY_SOFT     # #4ade80
-ACCENT_PRESSED = PRIMARY_DEEP   # #24b47e
-ACCENT_SOFT = "rgba(62, 207, 142, 0.12)"
+# Backward-compatibility aliases
+BG_0 = CANVAS                   # #1b1b1f
+BG_1 = CANVAS_ELV               # #202127
+BG_2 = CANVAS_SOFT              # #252529
+BG_3 = CANVAS_MUTE              # #2e2e32
+BORDER_STRONG = BORDER
+TEXT = TEXT_1                   # rgba(255, 255, 245, 0.88)
+TEXT_MUTED = TEXT_2             # rgba(235, 235, 245, 0.60)
+TEXT_FAINT = TEXT_3             # rgba(235, 235, 245, 0.38)
+ACCENT = PRIMARY                # #646cff
+ACCENT_HOVER = PRIMARY_HOVER    # #747bff
+ACCENT_PRESSED = PRIMARY_ACTIVE # #535bf2
+ACCENT_SOFT = PRIMARY_SOFT
 ACCENT_BORDER = PRIMARY
-ACCENT2 = PRIMARY
-RADIUS = RADIUS_SM
+ACCENT2 = ACCENT_PURPLE
+ON_PRIMARY = "#ffffff"
+ON_DARK = "#ffffff"
+HAIRLINE = BORDER_SUBTLE
+HAIRLINE_STRONG = BORDER
+HAIRLINE_COOL = BORDER_SUBTLE
+INK = TEXT_1
+INK_MUTE = TEXT_2
+INK_MUTE_2 = TEXT_3
+INK_FAINT = TEXT_3
+RADIUS = RADIUS_MD
 
 
 STYLESHEET = f"""
 /* ---------- Base & Typography ---------- */
 * {{
-    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Circular", "Helvetica Neue", Arial, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 13px;
-    color: {INK};
+    color: {TEXT_1};
 }}
 
 QMainWindow, QWidget {{
@@ -90,139 +95,139 @@ QMainWindow, QWidget {{
 }}
 
 QToolTip {{
-    background: {CANVAS_NIGHT};
-    color: {ON_DARK};
-    border: 1px solid {CANVAS_NIGHT_SOFT};
+    background: {CANVAS_ALT};
+    color: {TEXT_1};
+    border: 1px solid {BORDER};
     padding: 6px 10px;
     border-radius: {RADIUS_SM}px;
     font-size: 12px;
 }}
 
-/* ---------- Sidebar (Canvas Soft #fafafa) ---------- */
+/* ---------- Sidebar (Vite Dark Obsidian #161618) ---------- */
 QListWidget#Sidebar {{
-    background: {CANVAS_SOFT};
+    background: {CANVAS_ALT};
     border: none;
-    border-right: 1px solid {HAIRLINE};
-    padding: 8px 6px;
+    border-right: 1px solid {BORDER_SUBTLE};
+    padding: 10px 8px;
     outline: 0;
 }}
 QListWidget#Sidebar::item {{
-    padding: 7px 12px;
-    margin: 1px 2px;
-    border-radius: {RADIUS_SM}px;
-    color: {INK_MUTE};
+    padding: 8px 12px;
+    margin: 2px 2px;
+    border-radius: {RADIUS_MD}px;
+    color: {TEXT_2};
     font-size: 13px;
     font-weight: 500;
     border: 1px solid transparent;
 }}
 QListWidget#Sidebar::item:hover {{
-    background: {HAIRLINE_COOL};
-    color: {INK};
+    background: {CANVAS_ELV};
+    color: {TEXT_1};
 }}
 QListWidget#Sidebar::item:selected {{
-    background: {CANVAS};
-    color: {INK};
-    font-weight: 500;
-    border: 1px solid {HAIRLINE};
+    background: {PRIMARY_SOFT};
+    color: {PRIMARY_HOVER};
+    font-weight: 600;
+    border: 1px solid rgba(100, 108, 255, 0.36);
 }}
 
 QLabel#SidebarTitle {{
-    color: {INK};
+    color: {TEXT_1};
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.3px;
 }}
 QLabel#SidebarSubtitle {{
-    color: {INK_MUTE};
+    color: {TEXT_3};
     font-size: 11px;
 }}
 QLabel#SidebarSection {{
-    color: {INK_MUTE_2};
+    color: {TEXT_3};
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 1.0px;
     text-transform: uppercase;
     padding: 12px 12px 4px 12px;
 }}
 
-/* ---------- App Header (Pure White Canvas) ---------- */
+/* ---------- Header (Vite Workspace Canvas) ---------- */
 QFrame#Header {{
     background: {CANVAS};
-    border-bottom: 1px solid {HAIRLINE};
+    border-bottom: 1px solid {BORDER_SUBTLE};
     min-height: 54px;
     max-height: 54px;
 }}
 QLabel#HeaderTitle {{
-    color: {INK};
+    color: {TEXT_1};
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.2px;
 }}
 QLabel#HeaderSubtitle {{
-    color: {INK_MUTE};
+    color: {TEXT_2};
     font-size: 12px;
 }}
 
-/* ---------- Containers & Feature Cards ---------- */
+/* ---------- Containers & Feature Cards (Elevated #202127) ---------- */
 QFrame.Card {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE};
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
     border-radius: {RADIUS_LG}px;
 }}
 QLabel.CardTitle {{
-    color: {INK};
+    color: {TEXT_1};
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.1px;
 }}
 QLabel.CardDescription {{
-    color: {INK_MUTE};
+    color: {TEXT_2};
     font-size: 12px;
 }}
 QLabel.FieldLabel {{
-    color: {INK};
+    color: {TEXT_1};
     font-size: 12px;
     font-weight: 500;
     margin-bottom: 2px;
 }}
 QLabel.Hint {{
-    color: {INK_MUTE};
+    color: {TEXT_2};
     font-size: 12px;
     line-height: 16px;
 }}
 QLabel.SectionHeading {{
-    color: {INK};
+    color: {TEXT_1};
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.1px;
     padding-top: 4px;
 }}
 
-/* ---------- Form Controls & Inputs ---------- */
+/* ---------- Form Controls & Inputs (Deep #161618 / #252529) ---------- */
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QTextEdit, QPlainTextEdit {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE};
-    border-radius: {RADIUS_SM}px;
+    background: {CANVAS_ALT};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_MD}px;
     padding: 7px 11px;
-    color: {INK};
+    color: {TEXT_1};
     min-height: 20px;
     selection-background-color: {PRIMARY};
-    selection-color: {ON_PRIMARY};
+    selection-color: #ffffff;
 }}
 QLineEdit:hover, QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover,
 QTextEdit:hover, QPlainTextEdit:hover {{
-    border: 1px solid {HAIRLINE_STRONG};
-    background: {CANVAS};
+    border: 1px solid {BORDER};
+    background: {CANVAS_ALT};
 }}
 QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus,
 QTextEdit:focus, QPlainTextEdit:focus {{
     border: 1px solid {PRIMARY};
-    background: {CANVAS};
+    background: {CANVAS_ALT};
 }}
 QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
-    color: {INK_FAINT};
+    color: {TEXT_3};
     background: {CANVAS_SOFT};
-    border: 1px solid {HAIRLINE_COOL};
+    border: 1px solid {BORDER_SUBTLE};
 }}
 
 QComboBox {{
@@ -238,16 +243,16 @@ QComboBox::down-arrow {{
     image: none;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 5px solid {INK_MUTE};
+    border-top: 5px solid {TEXT_2};
     margin-right: 8px;
 }}
 QComboBox QAbstractItemView {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE_STRONG};
-    border-radius: {RADIUS_SM}px;
-    selection-background-color: {CANVAS_SOFT};
-    selection-color: {INK};
-    color: {INK};
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER};
+    border-radius: {RADIUS_MD}px;
+    selection-background-color: {PRIMARY_SOFT};
+    selection-color: {PRIMARY_HOVER};
+    color: {TEXT_1};
     padding: 4px;
     outline: 0;
 }}
@@ -262,20 +267,20 @@ QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
 }}
 QSpinBox::up-button:hover, QSpinBox::down-button:hover,
 QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover {{
-    background: {HAIRLINE_COOL};
+    background: {CANVAS_MUTE};
 }}
 
 QCheckBox {{
-    color: {INK};
+    color: {TEXT_1};
     spacing: 8px;
     font-size: 13px;
 }}
 QCheckBox::indicator {{
     width: 16px;
     height: 16px;
-    border: 1px solid {HAIRLINE_STRONG};
+    border: 1px solid {BORDER};
     border-radius: 4px;
-    background: {CANVAS};
+    background: {CANVAS_ALT};
 }}
 QCheckBox::indicator:hover {{
     border: 1px solid {PRIMARY};
@@ -286,123 +291,123 @@ QCheckBox::indicator:checked {{
     image: none;
 }}
 
-/* ---------- Buttons (Supabase Style) ---------- */
-/* Secondary / default outline button */
+/* ---------- Buttons (Vite Style) ---------- */
+/* Secondary / default button */
 QPushButton {{
-    background: {CANVAS};
-    color: {INK};
-    border: 1px solid {HAIRLINE_STRONG};
-    border-radius: {RADIUS_SM}px;
+    background: {CANVAS_SOFT};
+    color: {TEXT_1};
+    border: 1px solid {BORDER};
+    border-radius: {RADIUS_MD}px;
     padding: 7px 14px;
     font-weight: 500;
     font-size: 13px;
     min-height: 20px;
 }}
 QPushButton:hover {{
-    background: {CANVAS_SOFT};
-    border: 1px solid {INK_MUTE_2};
-    color: {INK};
+    background: {CANVAS_MUTE};
+    border: 1px solid rgba(100, 108, 255, 0.48);
+    color: #ffffff;
 }}
 QPushButton:pressed {{
-    background: {HAIRLINE_COOL};
-    border: 1px solid {INK_MUTE};
+    background: {CANVAS_ALT};
+    border: 1px solid {PRIMARY};
 }}
 QPushButton:disabled {{
-    color: {INK_FAINT};
-    background: {CANVAS_SOFT};
-    border: 1px solid {HAIRLINE};
+    color: {TEXT_3};
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
 }}
 
-/* Signature Emerald Green Primary CTA (near-black text: "lit surface") */
+/* Primary Electric Indigo CTA (#646cff) */
 QPushButton#Primary {{
     background: {PRIMARY};
-    color: {ON_PRIMARY};
+    color: #ffffff;
     border: 1px solid {PRIMARY};
-    border-radius: {RADIUS_SM}px;
+    border-radius: {RADIUS_MD}px;
     padding: 8px 18px;
     font-weight: 500;
     font-size: 13px;
 }}
 QPushButton#Primary:hover {{
-    background: {PRIMARY_SOFT};
-    border: 1px solid {PRIMARY_SOFT};
-    color: {ON_PRIMARY};
+    background: {PRIMARY_HOVER};
+    border: 1px solid {PRIMARY_HOVER};
+    color: #ffffff;
 }}
 QPushButton#Primary:pressed {{
-    background: {PRIMARY_DEEP};
-    border: 1px solid {PRIMARY_DEEP};
-    color: {ON_PRIMARY};
+    background: {PRIMARY_ACTIVE};
+    border: 1px solid {PRIMARY_ACTIVE};
+    color: #ffffff;
 }}
 QPushButton#Primary:disabled {{
-    background: {HAIRLINE_COOL};
-    color: {INK_FAINT};
-    border: 1px solid {HAIRLINE};
+    background: {CANVAS_SOFT};
+    color: {TEXT_3};
+    border: 1px solid {BORDER_SUBTLE};
 }}
 
-/* Ghost / link button */
+/* Ghost / text button */
 QPushButton#Ghost {{
     background: transparent;
     border: 1px solid transparent;
-    color: {INK_MUTE};
-    border-radius: {RADIUS_SM}px;
+    color: {TEXT_2};
+    border-radius: {RADIUS_MD}px;
 }}
 QPushButton#Ghost:hover {{
-    background: {HAIRLINE_COOL};
-    border: 1px solid {HAIRLINE};
-    color: {INK};
+    background: {PRIMARY_SOFT};
+    border: 1px solid rgba(100, 108, 255, 0.24);
+    color: {TEXT_1};
 }}
 QPushButton#Ghost:pressed {{
-    background: {HAIRLINE};
+    background: {CANVAS_MUTE};
 }}
 
 /* Destructive / Danger button */
 QPushButton#Danger {{
     background: transparent;
     color: {DANGER};
-    border: 1px solid rgba(255, 34, 1, 0.3);
-    border-radius: {RADIUS_SM}px;
+    border: 1px solid rgba(244, 63, 94, 0.32);
+    border-radius: {RADIUS_MD}px;
 }}
 QPushButton#Danger:hover {{
     background: {DANGER_BG};
     border: 1px solid {DANGER};
-    color: {DANGER};
+    color: #ffffff;
 }}
 
 /* Quick filter / preset chip button */
 QPushButton#PresetBtn {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE};
-    border-radius: {RADIUS_SM}px;
+    background: {CANVAS_SOFT};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_MD}px;
     padding: 5px 11px;
     font-size: 12px;
     font-weight: 500;
-    color: {INK_MUTE};
+    color: {TEXT_2};
 }}
 QPushButton#PresetBtn:hover {{
-    background: {CANVAS_SOFT};
-    border: 1px solid {HAIRLINE_STRONG};
-    color: {INK};
+    background: {CANVAS_MUTE};
+    border: 1px solid {BORDER};
+    color: {TEXT_1};
 }}
 QPushButton#PresetBtn:checked, QPushButton#PresetBtn:pressed {{
-    background: rgba(62, 207, 142, 0.12);
+    background: {PRIMARY_SOFT};
     border: 1px solid {PRIMARY};
-    color: {INK};
-    font-weight: 500;
+    color: {PRIMARY_HOVER};
+    font-weight: 600;
 }}
 
-/* ---------- Scrollbars (Minimal & Clean) ---------- */
+/* ---------- Scrollbars (Clean & Translucent) ---------- */
 QScrollBar:vertical {{
     background: transparent;
     width: 8px;
     margin: 2px;
 }}
 QScrollBar::handle:vertical {{
-    background: {HAIRLINE};
+    background: {CANVAS_MUTE};
     border-radius: 4px;
     min-height: 28px;
 }}
 QScrollBar::handle:vertical:hover {{
-    background: {HAIRLINE_STRONG};
+    background: rgba(100, 108, 255, 0.40);
 }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
@@ -417,12 +422,12 @@ QScrollBar:horizontal {{
     margin: 2px;
 }}
 QScrollBar::handle:horizontal {{
-    background: {HAIRLINE};
+    background: {CANVAS_MUTE};
     border-radius: 4px;
     min-width: 28px;
 }}
 QScrollBar::handle:horizontal:hover {{
-    background: {HAIRLINE_STRONG};
+    background: rgba(100, 108, 255, 0.40);
 }}
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
     width: 0;
@@ -430,8 +435,8 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
 
 /* ---------- Progress Bar ---------- */
 QProgressBar {{
-    background: {HAIRLINE_COOL};
-    border: 1px solid {HAIRLINE};
+    background: {CANVAS_ALT};
+    border: 1px solid {BORDER_SUBTLE};
     border-radius: 4px;
     height: 6px;
     text-align: center;
@@ -443,60 +448,60 @@ QProgressBar::chunk {{
 
 /* ---------- Tables & Tree Views (Batch queue / Library) ---------- */
 QTreeWidget, QTableWidget {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE};
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
     border-radius: {RADIUS_MD}px;
-    gridline-color: {HAIRLINE_COOL};
-    color: {INK};
-    selection-background-color: rgba(62, 207, 142, 0.12);
-    selection-color: {INK};
+    gridline-color: {BORDER_SUBTLE};
+    color: {TEXT_1};
+    selection-background-color: {PRIMARY_SOFT};
+    selection-color: {TEXT_1};
     outline: 0;
 }}
 QTreeWidget::item, QTableWidget::item {{
     padding: 6px 10px;
-    border-bottom: 1px solid {HAIRLINE_COOL};
+    border-bottom: 1px solid {BORDER_SUBTLE};
 }}
 QTreeWidget::item:selected, QTableWidget::item:selected {{
-    background: rgba(62, 207, 142, 0.12);
-    color: {INK};
+    background: {PRIMARY_SOFT};
+    color: #ffffff;
 }}
 QHeaderView::section {{
-    background: {CANVAS_SOFT};
-    color: {INK_MUTE};
+    background: {CANVAS_ALT};
+    color: {TEXT_2};
     border: none;
-    border-bottom: 1px solid {HAIRLINE};
+    border-bottom: 1px solid {BORDER_SUBTLE};
     padding: 7px 10px;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 12px;
 }}
 
 /* ---------- Popup Menus & Dialogs ---------- */
 QMenu {{
-    background: {CANVAS};
-    border: 1px solid {HAIRLINE_STRONG};
-    border-radius: {RADIUS_SM}px;
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER};
+    border-radius: {RADIUS_MD}px;
     padding: 4px;
 }}
 QMenu::item {{
     padding: 7px 22px 7px 14px;
     border-radius: 4px;
-    color: {INK};
+    color: {TEXT_1};
 }}
 QMenu::item:selected {{
-    background: {CANVAS_SOFT};
-    color: {INK};
+    background: {PRIMARY_SOFT};
+    color: {PRIMARY_HOVER};
 }}
 QMenu::item:disabled {{
-    color: {INK_FAINT};
+    color: {TEXT_3};
 }}
 QMenu::separator {{
     height: 1px;
-    background: {HAIRLINE};
+    background: {BORDER_SUBTLE};
     margin: 4px 6px;
 }}
 
 QSplitter::handle {{
-    background: {HAIRLINE};
+    background: {BORDER_SUBTLE};
 }}
 QSplitter::handle:horizontal {{
     width: 1px;
@@ -506,13 +511,13 @@ QSplitter::handle:vertical {{
 }}
 
 QDialog, QMessageBox, QInputDialog {{
-    background: {CANVAS};
+    background: {CANVAS_ELV};
 }}
 QMessageBox QLabel, QInputDialog QLabel {{
-    color: {INK};
+    color: {TEXT_1};
 }}
 """
 
 def apply_theme(app):
-    """Apply the Supabase stylesheet to the whole QApplication."""
+    """Apply the Vite stylesheet to the whole QApplication."""
     app.setStyleSheet(STYLESHEET)

@@ -19,10 +19,11 @@ from src.core.pdf_engine import PdfEngine
 from src.paths import resource_path
 from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, CANVAS, CANVAS_NIGHT, CANVAS_SOFT,
-    DANGER, HAIRLINE, HAIRLINE_COOL, INK, INK_FAINT, INK_MUTE, INK_MUTE_2,
-    ON_PRIMARY, PRIMARY, PRIMARY_DEEP, PRIMARY_SOFT, RADIUS_LG, RADIUS_MD, RADIUS_SM,
-    SUCCESS, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
+    ACCENT, ACCENT_CYAN, ACCENT_PURPLE, BG_1, BG_2, BORDER, BORDER_STRONG,
+    BORDER_SUBTLE, CANVAS, CANVAS_ALT, CANVAS_ELV, CANVAS_MUTE, CANVAS_SOFT,
+    DANGER, ON_PRIMARY, PRIMARY, PRIMARY_ACTIVE, PRIMARY_HOVER, PRIMARY_SOFT,
+    RADIUS_LG, RADIUS_MD, RADIUS_SM, SUCCESS, TEXT, TEXT_1, TEXT_2, TEXT_3,
+    TEXT_FAINT, TEXT_MUTED, WARN
 )
 from src.ui.widgets.batch_view import BatchView
 from src.ui.widgets.file_list import FileListWidget
@@ -186,25 +187,25 @@ class MainWindow(QMainWindow):
         brand_row = QHBoxLayout()
         brand_row.setSpacing(8)
         brand_icon = QLabel()
-        brand_icon.setPixmap(get_pixmap("pdf", PRIMARY, 20))
+        brand_icon.setPixmap(get_pixmap("pdf", ACCENT_PURPLE, 20))
         brand_title = QLabel("PDF Toolkit")
         brand_title.setObjectName("SidebarTitle")
-        brand_title.setStyleSheet(f"font-size:15px;font-weight:500;color:{INK};padding:0;")
+        brand_title.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};padding:0;")
         brand_row.addWidget(brand_icon)
         brand_row.addWidget(brand_title)
         brand_row.addStretch()
 
-        badge = QLabel("● OFFLINE")
+        badge = QLabel("OFFLINE")
         badge.setStyleSheet(
-            f"background:{CANVAS};color:{INK};font-size:10px;font-weight:500;"
-            f"border:1px solid {HAIRLINE};border-radius:9999px;padding:2px 8px;"
+            f"background:{PRIMARY_SOFT};color:{PRIMARY_HOVER};font-size:10px;font-weight:600;"
+            f"border:1px solid rgba(100,108,255,0.36);border-radius:9999px;padding:2px 8px;"
         )
         brand_row.addWidget(badge)
         hv.addLayout(brand_row)
 
         sub = QLabel("Fast · Private · Secure")
         sub.setObjectName("SidebarSubtitle")
-        sub.setStyleSheet(f"color:{INK_MUTE};font-size:11px;padding:0 2px;")
+        sub.setStyleSheet(f"color:{TEXT_3};font-size:11px;padding:0 2px;")
         hv.addWidget(sub)
         v.addWidget(header_widget)
 
@@ -250,7 +251,7 @@ class MainWindow(QMainWindow):
         fv.setContentsMargins(12, 10, 12, 14)
         open_btn = QPushButton("  Open PDFs…")
         open_btn.setObjectName("Primary")
-        open_btn.setIcon(get_icon("add", ON_PRIMARY, 14))
+        open_btn.setIcon(get_icon("add", "#ffffff", 14))
         open_btn.setMinimumHeight(38)
         open_btn.clicked.connect(self._open_files)
         fv.addWidget(open_btn)
@@ -281,8 +282,8 @@ class MainWindow(QMainWindow):
         self.active_file_pill = QFrame()
         self.active_file_pill.setStyleSheet(
             f"QFrame{{"
-            f"  background:{CANVAS_SOFT};"
-            f"  border:1px solid {HAIRLINE};"
+            f"  background:{CANVAS_ELV};"
+            f"  border:1px solid {BORDER_SUBTLE};"
             f"  border-radius:9999px;"
             f"  padding:2px 10px;"
             f"}}"
@@ -294,7 +295,7 @@ class MainWindow(QMainWindow):
         self.pill_icon = QLabel()
         self.pill_icon.setPixmap(get_pixmap("pdf", PRIMARY, 16))
         self.pill_text = QLabel("No active file")
-        self.pill_text.setStyleSheet(f"color:{INK};font-size:12px;font-weight:500;")
+        self.pill_text.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;")
         pill_layout.addWidget(self.pill_icon)
         pill_layout.addWidget(self.pill_text)
 
@@ -308,7 +309,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.active_file_pill)
 
         self.save_btn = QPushButton("Save Copy…")
-        self.save_btn.setIcon(get_icon("to_images", INK_MUTE, 14))
+        self.save_btn.setIcon(get_icon("to_images", TEXT_MUTED, 14))
         self.save_btn.clicked.connect(self._save_current)
         self.save_btn.setEnabled(False)
         layout.addWidget(self.save_btn)
@@ -317,7 +318,7 @@ class MainWindow(QMainWindow):
         self.help_btn.setObjectName("Ghost")
         self.help_btn.setFixedSize(30, 30)
         self.help_btn.setToolTip("Keyboard Shortcuts & Help (F1)")
-        self.help_btn.setStyleSheet(f"font-weight:500;font-size:13px;border:1px solid {HAIRLINE};border-radius:6px;")
+        self.help_btn.setStyleSheet(f"font-weight:500;font-size:13px;border:1px solid {BORDER_SUBTLE};border-radius:6px;")
         self.help_btn.clicked.connect(self._show_shortcuts)
         layout.addWidget(self.help_btn)
 
@@ -439,24 +440,24 @@ class MainWindow(QMainWindow):
 
         sep = QFrame()
         sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet(f"background:{HAIRLINE};max-height:1px;border:none;")
+        sep.setStyleSheet(f"background:{BORDER_SUBTLE};max-height:1px;border:none;")
         lv.addWidget(sep)
 
         # No-file banner with quick open button
         self.no_file_banner = QFrame()
         self.no_file_banner.setStyleSheet(
-            f"background:{CANVAS_SOFT};"
-            f"border-top:1px solid {HAIRLINE};"
-            f"border-bottom:1px solid {HAIRLINE};"
+            f"background:{CANVAS_ALT};"
+            f"border-top:1px solid {BORDER_SUBTLE};"
+            f"border-bottom:1px solid {BORDER_SUBTLE};"
             f"padding:8px 14px;"
         )
         nfb_layout = QHBoxLayout(self.no_file_banner)
         nfb_layout.setContentsMargins(10, 6, 10, 6)
         nfb_label = QLabel("Notice: No PDF loaded. Open a PDF to configure and run this tool.")
-        nfb_label.setStyleSheet(f"color:{INK_MUTE};font-size:12px;font-weight:500;")
+        nfb_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;font-weight:500;")
         nfb_btn = QPushButton("Open PDF…")
         nfb_btn.setObjectName("Primary")
-        nfb_btn.setIcon(get_icon("add", ON_PRIMARY, 12))
+        nfb_btn.setIcon(get_icon("add", "#ffffff", 12))
         nfb_btn.setFixedHeight(28)
         nfb_btn.clicked.connect(self._open_files)
         nfb_layout.addWidget(nfb_label, 1)
@@ -503,13 +504,13 @@ class MainWindow(QMainWindow):
     def _make_card(self) -> QFrame:
         f = QFrame()
         f.setStyleSheet(
-            f"QFrame{{background:{CANVAS};border:1px solid {HAIRLINE};border-radius:{RADIUS_LG}px;}}"
+            f"QFrame{{background:{CANVAS_ELV};border:1px solid {BORDER_SUBTLE};border-radius:{RADIUS_LG}px;}}"
         )
         return f
 
     def _section_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-size:15px;font-weight:500;color:{INK};")
+        lbl.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};")
         return lbl
 
     def _build_empty_state(self, title: str, subtitle: str) -> QWidget:
@@ -520,17 +521,17 @@ class MainWindow(QMainWindow):
         v.setContentsMargins(20, 20, 20, 20)
 
         icon_label = QLabel()
-        icon_label.setPixmap(get_pixmap("pdf", INK_MUTE_2, 44))
+        icon_label.setPixmap(get_pixmap("pdf", TEXT_3, 44))
         icon_label.setAlignment(Qt.AlignCenter)
         icon_label.setStyleSheet("background:transparent;border:none;")
 
         t = QLabel(title)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:15px;font-weight:500;color:{INK};background:transparent;border:none;")
+        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};background:transparent;border:none;")
 
         s = QLabel(subtitle)
         s.setAlignment(Qt.AlignCenter)
-        s.setStyleSheet(f"font-size:12px;color:{INK_MUTE};background:transparent;border:none;")
+        s.setStyleSheet(f"font-size:12px;color:{TEXT_2};background:transparent;border:none;")
         s.setWordWrap(True)
 
         v.addStretch()

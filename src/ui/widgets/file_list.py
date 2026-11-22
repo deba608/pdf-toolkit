@@ -12,9 +12,9 @@ from PySide6.QtWidgets import (
 from src.core.models import PdfFile
 from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, CANVAS, CANVAS_SOFT,
-    DANGER, HAIRLINE, HAIRLINE_STRONG, INK, INK_FAINT, INK_MUTE, INK_MUTE_2,
-    ON_PRIMARY, PRIMARY, RADIUS_MD, RADIUS_SM, SUCCESS, TEXT, TEXT_FAINT, TEXT_MUTED
+    ACCENT, BORDER, BORDER_SUBTLE, CANVAS, CANVAS_ALT, CANVAS_ELV, CANVAS_SOFT,
+    DANGER, ON_PRIMARY, PRIMARY, RADIUS_MD, RADIUS_SM, SUCCESS, TEXT, TEXT_1,
+    TEXT_2, TEXT_3, TEXT_FAINT, TEXT_MUTED
 )
 
 
@@ -69,8 +69,8 @@ class FileListWidget(QWidget):
         w = QFrame()
         w.setStyleSheet(
             f"QFrame{{"
-            f"  background:{CANVAS_SOFT};"
-            f"  border:2px dashed {HAIRLINE};"
+            f"  background:{CANVAS_ALT};"
+            f"  border:2px dashed {BORDER};"
             f"  border-radius:{RADIUS_MD}px;"
             f"}}"
             f"QFrame:hover{{"
@@ -83,22 +83,22 @@ class FileListWidget(QWidget):
         v.setContentsMargins(20, 28, 20, 28)
 
         icon_label = QLabel()
-        icon_label.setPixmap(get_pixmap("pdf", INK_MUTE_2, 38))
+        icon_label.setPixmap(get_pixmap("pdf", TEXT_3, 38))
         icon_label.setAlignment(Qt.AlignCenter)
         icon_label.setStyleSheet("background:transparent;border:none;")
 
         title = QLabel("Library is Empty")
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"font-size:14px;font-weight:500;color:{INK};background:transparent;border:none;")
+        title.setStyleSheet(f"font-size:14px;font-weight:600;color:{TEXT_1};background:transparent;border:none;")
 
         desc = QLabel("Drag & drop PDF files here\nor choose files from your computer")
         desc.setAlignment(Qt.AlignCenter)
         desc.setWordWrap(True)
-        desc.setStyleSheet(f"font-size:12px;color:{INK_MUTE};background:transparent;border:none;")
+        desc.setStyleSheet(f"font-size:12px;color:{TEXT_2};background:transparent;border:none;")
 
         browse_btn = QPushButton("  Browse PDFs…")
         browse_btn.setObjectName("Primary")
-        browse_btn.setIcon(get_icon("add", ON_PRIMARY, 14))
+        browse_btn.setIcon(get_icon("add", "#ffffff", 14))
         browse_btn.setMinimumHeight(34)
         browse_btn.clicked.connect(lambda: self.open_requested.emit())
 
