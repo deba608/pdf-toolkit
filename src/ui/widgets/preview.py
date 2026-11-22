@@ -15,8 +15,8 @@ from PySide6.QtWidgets import (
 from src.core.models import PdfFile
 from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    BG_1, BG_2, BORDER, BORDER_STRONG, CANVAS, CANVAS_NIGHT, HAIRLINE,
-    HAIRLINE_COOL, INK, INK_FAINT, INK_MUTE, PRIMARY, TEXT, TEXT_FAINT, TEXT_MUTED
+    BORDER, BORDER_SUBTLE, CANVAS, CANVAS_ALT, CANVAS_ELV, PRIMARY,
+    TEXT_1, TEXT_2, TEXT_3, TEXT_FAINT, TEXT_MUTED
 )
 
 
@@ -38,8 +38,8 @@ class PreviewWidget(QWidget):
         self.toolbar.setObjectName("PreviewToolbar")
         self.toolbar.setStyleSheet(
             f"QFrame#PreviewToolbar{{"
-            f"  background:{CANVAS};"
-            f"  border-bottom:1px solid {HAIRLINE};"
+            f"  background:{CANVAS_ELV};"
+            f"  border-bottom:1px solid {BORDER_SUBTLE};"
             f"  padding:4px 8px;"
             f"}}"
         )
@@ -49,7 +49,7 @@ class PreviewWidget(QWidget):
 
         # Page navigation
         self.prev_btn = QPushButton()
-        self.prev_btn.setIcon(get_icon("prev", INK, 14))
+        self.prev_btn.setIcon(get_icon("prev", TEXT_1, 14))
         self.prev_btn.setToolTip("Previous page (Left Arrow)")
         self.prev_btn.setFixedSize(30, 28)
         self.prev_btn.clicked.connect(self._prev_page)
@@ -63,10 +63,10 @@ class PreviewWidget(QWidget):
         self.page_spin.valueChanged.connect(self._on_spin_page_changed)
 
         self.page_count_label = QLabel("/ 1")
-        self.page_count_label.setStyleSheet(f"color:{INK_MUTE};font-size:12px;margin-right:6px;")
+        self.page_count_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;margin-right:6px;")
 
         self.next_btn = QPushButton()
-        self.next_btn.setIcon(get_icon("next", INK, 14))
+        self.next_btn.setIcon(get_icon("next", TEXT_1, 14))
         self.next_btn.setToolTip("Next page (Right Arrow)")
         self.next_btn.setFixedSize(30, 28)
         self.next_btn.clicked.connect(self._next_page)
@@ -79,12 +79,12 @@ class PreviewWidget(QWidget):
         # Separator
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.VLine)
-        sep1.setStyleSheet(f"background:{HAIRLINE};max-width:1px;margin:2px 4px;")
+        sep1.setStyleSheet(f"background:{BORDER_SUBTLE};max-width:1px;margin:2px 4px;")
         tb_layout.addWidget(sep1)
 
         # Zoom controls
         self.zoom_out_btn = QPushButton()
-        self.zoom_out_btn.setIcon(get_icon("zoom_out", INK, 14))
+        self.zoom_out_btn.setIcon(get_icon("zoom_out", TEXT_1, 14))
         self.zoom_out_btn.setToolTip("Zoom out (Ctrl + -)")
         self.zoom_out_btn.setFixedSize(30, 28)
         self.zoom_out_btn.clicked.connect(self.zoom_out)
@@ -92,22 +92,22 @@ class PreviewWidget(QWidget):
         self.zoom_label = QLabel("100%")
         self.zoom_label.setAlignment(Qt.AlignCenter)
         self.zoom_label.setFixedWidth(46)
-        self.zoom_label.setStyleSheet(f"color:{INK};font-size:12px;font-weight:500;")
+        self.zoom_label.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:600;")
 
         self.zoom_in_btn = QPushButton()
-        self.zoom_in_btn.setIcon(get_icon("zoom_in", INK, 14))
+        self.zoom_in_btn.setIcon(get_icon("zoom_in", TEXT_1, 14))
         self.zoom_in_btn.setToolTip("Zoom in (Ctrl + +)")
         self.zoom_in_btn.setFixedSize(30, 28)
         self.zoom_in_btn.clicked.connect(self.zoom_in)
 
         self.fit_width_btn = QPushButton("Fit Width")
-        self.fit_width_btn.setIcon(get_icon("fit_width", INK_MUTE, 14))
+        self.fit_width_btn.setIcon(get_icon("fit_width", TEXT_2, 14))
         self.fit_width_btn.setToolTip("Fit page to pane width")
         self.fit_width_btn.setFixedHeight(28)
         self.fit_width_btn.clicked.connect(self.reset_zoom)
 
         self.fit_page_btn = QPushButton("Fit Page")
-        self.fit_page_btn.setIcon(get_icon("fit_page", INK_MUTE, 14))
+        self.fit_page_btn.setIcon(get_icon("fit_page", TEXT_2, 14))
         self.fit_page_btn.setToolTip("Fit whole page")
         self.fit_page_btn.setFixedHeight(28)
         self.fit_page_btn.clicked.connect(self._fit_page)
@@ -122,7 +122,7 @@ class PreviewWidget(QWidget):
 
         # Rotate view button
         self.rotate_view_btn = QPushButton("Rotate")
-        self.rotate_view_btn.setIcon(get_icon("rotate", INK_MUTE, 14))
+        self.rotate_view_btn.setIcon(get_icon("rotate", TEXT_2, 14))
         self.rotate_view_btn.setToolTip("Temporarily rotate current view clockwise 90°")
         self.rotate_view_btn.setFixedHeight(28)
         self.rotate_view_btn.clicked.connect(self._rotate_view_clockwise)
@@ -138,7 +138,7 @@ class PreviewWidget(QWidget):
         self.view.setZoomMode(QPdfView.ZoomMode.FitToWidth)
         self.view.setPageSpacing(12)
         # Deep dark canvas background
-        self.view.setStyleSheet(f"background:{CANVAS_NIGHT};border:none;")
+        self.view.setStyleSheet(f"background:{CANVAS_ALT};border:none;")
 
         self.error_label = QLabel()
         self.error_label.setAlignment(Qt.AlignCenter)
