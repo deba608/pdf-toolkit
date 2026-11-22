@@ -14,9 +14,9 @@ from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
 from src.ui.icons import get_icon
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, CANVAS, CANVAS_SOFT, DANGER, HAIRLINE,
-    HAIRLINE_COOL, INK, INK_FAINT, INK_MUTE, ON_PRIMARY, PRIMARY,
-    RADIUS_LG, SUCCESS, TEXT, TEXT_FAINT, TEXT_MUTED
+    ACCENT, BORDER, BORDER_SUBTLE, CANVAS, CANVAS_ALT, CANVAS_ELV, CANVAS_SOFT,
+    DANGER, ON_PRIMARY, PRIMARY, RADIUS_LG, RADIUS_MD, SUCCESS, TEXT,
+    TEXT_1, TEXT_2, TEXT_3, TEXT_FAINT, TEXT_MUTED
 )
 
 # (key, label, description)
@@ -137,10 +137,10 @@ class BatchView(QWidget):
 
         head = QHBoxLayout()
         title = QLabel("Execution Queue")
-        title.setStyleSheet(f"font-size:15px;font-weight:500;color:{INK};")
+        title.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};")
         head.addWidget(title)
         self.count_label = QLabel("0 files")
-        self.count_label.setStyleSheet(f"color:{INK_MUTE};font-size:12px;margin-left:4px;")
+        self.count_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;margin-left:4px;")
         head.addWidget(self.count_label)
         head.addStretch()
         reset_btn = QPushButton("Reset status")
@@ -156,10 +156,10 @@ class BatchView(QWidget):
         self.tree.setAlternatingRowColors(False)
         self.tree.setFrameShape(QFrame.NoFrame)
         self.tree.setStyleSheet(
-            f"QTreeWidget{{background:{CANVAS};border:1px solid {HAIRLINE};border-radius:6px;}}"
+            f"QTreeWidget{{background:{CANVAS_ALT};border:1px solid {BORDER_SUBTLE};border-radius:6px;}}"
             "QTreeWidget::item{padding:6px 6px;}"
-            f"QHeaderView::section{{background:{CANVAS_SOFT};color:{INK_MUTE};"
-            f"padding:7px 10px;border:none;border-bottom:1px solid {HAIRLINE};font-weight:500;}}"
+            f"QHeaderView::section{{background:{CANVAS_ALT};color:{TEXT_2};"
+            f"padding:7px 10px;border:none;border-bottom:1px solid {BORDER_SUBTLE};font-weight:600;}}"
         )
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -177,7 +177,7 @@ class BatchView(QWidget):
 
         self.run_btn = QPushButton("  Run batch")
         self.run_btn.setObjectName("Primary")
-        self.run_btn.setIcon(get_icon("batch", ON_PRIMARY, 14))
+        self.run_btn.setIcon(get_icon("batch", "#ffffff", 14))
         self.run_btn.setMinimumHeight(38)
         self.run_btn.clicked.connect(self._run)
         action_row.addWidget(self.run_btn)
@@ -191,13 +191,13 @@ class BatchView(QWidget):
     def _card(self) -> QFrame:
         f = QFrame()
         f.setStyleSheet(
-            f"QFrame{{background:{CANVAS};border:1px solid {HAIRLINE};border-radius:{RADIUS_LG}px;}}"
+            f"QFrame{{background:{CANVAS_ELV};border:1px solid {BORDER_SUBTLE};border-radius:{RADIUS_LG}px;}}"
         )
         return f
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{INK};font-size:12px;font-weight:500;")
+        lbl.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;")
         return lbl
 
     def _build_param_panels(self):

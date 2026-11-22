@@ -105,7 +105,7 @@ class ToolPanelsStack(QWidget):
     def _primary_button(self, text: str, icon_name: str, handler, requirement: str = "file") -> QPushButton:
         btn = QPushButton(text)
         btn.setObjectName("Primary")
-        btn.setIcon(get_icon(icon_name, ON_PRIMARY, 16))
+        btn.setIcon(get_icon(icon_name, "#ffffff", 16))
         btn.setMinimumHeight(42)
         btn.clicked.connect(handler)
         self._actions.append((btn, requirement))
@@ -113,12 +113,12 @@ class ToolPanelsStack(QWidget):
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{INK};font-size:12px;font-weight:500;letter-spacing:-0.1px;")
+        lbl.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;letter-spacing:-0.1px;")
         return lbl
 
     def _hint(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{INK_MUTE};font-size:12px;line-height:18px;")
+        lbl.setStyleSheet(f"color:{TEXT_2};font-size:12px;line-height:18px;")
         lbl.setWordWrap(True)
         return lbl
 
@@ -129,19 +129,19 @@ class ToolPanelsStack(QWidget):
         v.setSpacing(6)
 
         lbl = QLabel(title)
-        lbl.setStyleSheet(f"color:{INK};font-size:13px;font-weight:500;letter-spacing:-0.1px;")
+        lbl.setStyleSheet(f"color:{TEXT_1};font-size:13px;font-weight:600;letter-spacing:-0.1px;")
         v.addWidget(lbl)
 
         sep = QFrame()
         sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet(f"background:{HAIRLINE};max-height:1px;border:none;")
+        sep.setStyleSheet(f"background:{BORDER_SUBTLE};max-height:1px;border:none;")
         v.addWidget(sep)
         return w
 
     def _info_banner(self, text: str, icon_name: str = "pdf") -> QFrame:
         banner = QFrame()
         banner.setStyleSheet(
-            f"background:{CANVAS_SOFT};border:1px solid {HAIRLINE};border-radius:6px;padding:8px 12px;"
+            f"background:{CANVAS_ALT};border:1px solid {BORDER_SUBTLE};border-radius:8px;padding:8px 12px;"
         )
         hb = QHBoxLayout(banner)
         hb.setContentsMargins(4, 2, 4, 2)
@@ -149,7 +149,7 @@ class ToolPanelsStack(QWidget):
         ic = QLabel()
         ic.setPixmap(get_pixmap(icon_name, PRIMARY, 18))
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{INK_MUTE};font-size:12px;font-weight:500;")
+        lbl.setStyleSheet(f"color:{TEXT_2};font-size:12px;font-weight:500;")
         lbl.setWordWrap(True)
         hb.addWidget(ic)
         hb.addWidget(lbl, 1)

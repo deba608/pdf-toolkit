@@ -429,10 +429,10 @@ class MainWindow(QMainWindow):
         lv.setSpacing(0)
 
         self.tool_header_title = QLabel("Tool")
-        self.tool_header_title.setStyleSheet(f"font-size:16px;font-weight:500;color:{INK};padding:16px 18px 2px 18px;")
+        self.tool_header_title.setStyleSheet(f"font-size:16px;font-weight:600;color:{TEXT_1};padding:16px 18px 2px 18px;")
         self.tool_header_desc = QLabel("")
         self.tool_header_desc.setStyleSheet(
-            f"color:{INK_MUTE};font-size:12px;padding:0 18px 14px 18px;"
+            f"color:{TEXT_2};font-size:12px;padding:0 18px 14px 18px;"
         )
         self.tool_header_desc.setWordWrap(True)
         lv.addWidget(self.tool_header_title)
