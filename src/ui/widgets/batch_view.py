@@ -108,7 +108,7 @@ class BatchView(QWidget):
 
         self.op_desc = QLabel()
         self.op_desc.setWordWrap(True)
-        self.op_desc.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;line-height:16px;")
+        # QSS handles color/font via object name; no inline style needed
         tv.addWidget(self.op_desc)
 
         self.param_stack = QStackedWidget()
@@ -137,10 +137,10 @@ class BatchView(QWidget):
 
         head = QHBoxLayout()
         title = QLabel("Execution Queue")
-        title.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};")
+        title.setObjectName("SectionTitle")
         head.addWidget(title)
         self.count_label = QLabel("0 files")
-        self.count_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;margin-left:4px;")
+        self.count_label.setObjectName("SectionLabel")
         head.addWidget(self.count_label)
         head.addStretch()
         reset_btn = QPushButton("Reset status")
@@ -155,12 +155,7 @@ class BatchView(QWidget):
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(False)
         self.tree.setFrameShape(QFrame.NoFrame)
-        self.tree.setStyleSheet(
-            f"QTreeWidget{{background:{CANVAS_ALT};border:1px solid {BORDER_SUBTLE};border-radius:6px;}}"
-            "QTreeWidget::item{padding:6px 6px;}"
-            f"QHeaderView::section{{background:{CANVAS_ALT};color:{TEXT_2};"
-            f"padding:7px 10px;border:none;border-bottom:1px solid {BORDER_SUBTLE};font-weight:600;}}"
-        )
+        # QSS handles styling via theme
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
@@ -197,7 +192,7 @@ class BatchView(QWidget):
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;")
+        lbl.setObjectName("FieldLabel")
         return lbl
 
     def _build_param_panels(self):
