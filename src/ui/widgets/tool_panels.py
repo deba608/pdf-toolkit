@@ -113,12 +113,12 @@ class ToolPanelsStack(QWidget):
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;letter-spacing:-0.1px;")
+        lbl.setObjectName("FieldLabel")
         return lbl
 
     def _hint(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{TEXT_2};font-size:12px;line-height:18px;")
+        lbl.setObjectName("Hint")
         lbl.setWordWrap(True)
         return lbl
 
@@ -129,12 +129,12 @@ class ToolPanelsStack(QWidget):
         v.setSpacing(6)
 
         lbl = QLabel(title)
-        lbl.setStyleSheet(f"color:{TEXT_1};font-size:13px;font-weight:600;letter-spacing:-0.1px;")
+        lbl.setObjectName("SectionHeader")
         v.addWidget(lbl)
 
         sep = QFrame()
         sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet(f"background:{BORDER_SUBTLE};max-height:1px;border:none;")
+        # use QSS from theme
         v.addWidget(sep)
         return w
 

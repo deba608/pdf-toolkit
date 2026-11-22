@@ -188,18 +188,76 @@ QLabel#ActiveFilePillText {{
     font-weight: 500;
 }}
 
-QPushButton#HelpBtn {{
+/* ---------- Section headers ---------- */
+QLabel#SectionHeader {{
+    color: {TEXT_1};
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+}}
+
+/* ---------- Form field labels ---------- */
+QLabel#FieldLabel {{
+    color: {TEXT_1};
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    margin-bottom: 2px;
+}}
+
+/* ---------- Hint text ---------- */
+QLabel#Hint {{
+    color: {TEXT_2};
+    font-size: 12px;
+    line-height: 18px;
+}}
+
+/* ---------- Info banners ---------- */
+QFrame#InfoBanner {{
+    background: {CANVAS_ALT};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_MD}px;
+    padding: 8px 12px;
+}}
+
+/* ---------- Floating / banner styles ---------- */
+QFrame#NoFileBanner {{
+    background: {CANVAS_ALT};
+    border-top: 1px solid {BORDER_SUBTLE};
+    border-bottom: 1px solid {BORDER_SUBTLE};
+}}
+
+/* ---------- Floating / banner label ---------- */
+QFrame#NoFileBanner QLabel#NoFileLabel {{
+    color: {TEXT_2};
+    font-size: 12px;
+    font-weight: 500;
+}}
+
+/* ---------- Primary button ---------- */
+QPushButton#Primary {{
+    background: {PRIMARY};
+    color: #ffffff;
+    border: 1px solid {PRIMARY};
+    border-radius: {RADIUS_MD}px;
+    padding: 8px 18px;
     font-weight: 500;
     font-size: 13px;
-    border: 1px solid {BORDER_SUBTLE};
-    border-radius: {RADIUS_SM}px;
-    background: transparent;
-    color: {TEXT_2};
 }}
-QPushButton#HelpBtn:hover {{
-    background: {PRIMARY_SOFT};
-    border: 1px solid rgba(100, 108, 255, 0.24);
-    color: {TEXT_1};
+QPushButton#Primary:hover {{
+    background: {PRIMARY_HOVER};
+    border: 1px solid {PRIMARY_HOVER};
+    color: #ffffff;
+}}
+QPushButton#Primary:pressed {{
+    background: {PRIMARY_ACTIVE};
+    border: 1px solid {PRIMARY_ACTIVE};
+    color: #ffffff;
+}}
+QPushButton#Primary:disabled {{
+    background: {CANVAS_SOFT};
+    color: {TEXT_3};
+    border: 1px solid {BORDER_SUBTLE};
 }}
 
 /* ---------- Section labels ---------- */
