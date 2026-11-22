@@ -11,7 +11,7 @@ from src.core.models import PdfFile
 from src.core.pdf_engine import PERM_ALL, PERM_PRINT
 from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BG_3, BORDER, BORDER_STRONG, DANGER, SUCCESS,
+    ACCENT, ACCENT2, BG_1, BG_2, BG_3, BORDER, BORDER_STRONG, DANGER, SUCCESS,
     TEXT, TEXT_FAINT, TEXT_MUTED, WARN
 )
 
