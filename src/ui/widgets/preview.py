@@ -36,13 +36,7 @@ class PreviewWidget(QWidget):
         # Preview Toolbar
         self.toolbar = QFrame()
         self.toolbar.setObjectName("PreviewToolbar")
-        self.toolbar.setStyleSheet(
-            f"QFrame#PreviewToolbar{{"
-            f"  background:{CANVAS_ELV};"
-            f"  border-bottom:1px solid {BORDER_SUBTLE};"
-            f"  padding:4px 8px;"
-            f"}}"
-        )
+        # QSS handles styling via theme; no inline style needed
         tb_layout = QHBoxLayout(self.toolbar)
         tb_layout.setContentsMargins(4, 3, 4, 3)
         tb_layout.setSpacing(6)
@@ -63,7 +57,7 @@ class PreviewWidget(QWidget):
         self.page_spin.valueChanged.connect(self._on_spin_page_changed)
 
         self.page_count_label = QLabel("/ 1")
-        self.page_count_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;margin-right:6px;")
+        self.page_count_label.setObjectName("PageCountLabel")
 
         self.next_btn = QPushButton()
         self.next_btn.setIcon(get_icon("next", TEXT_1, 14))
@@ -79,7 +73,7 @@ class PreviewWidget(QWidget):
         # Separator
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.VLine)
-        sep1.setStyleSheet(f"background:{BORDER_SUBTLE};max-width:1px;margin:2px 4px;")
+        # QSS handles styling via theme
         tb_layout.addWidget(sep1)
 
         # Zoom controls
@@ -92,7 +86,8 @@ class PreviewWidget(QWidget):
         self.zoom_label = QLabel("100%")
         self.zoom_label.setAlignment(Qt.AlignCenter)
         self.zoom_label.setFixedWidth(46)
-        self.zoom_label.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:600;")
+        # QSS handles color/font via object name
+        # zoom_label setStyleSheet removed
 
         self.zoom_in_btn = QPushButton()
         self.zoom_in_btn.setIcon(get_icon("zoom_in", TEXT_1, 14))
@@ -137,13 +132,14 @@ class PreviewWidget(QWidget):
         self.view.setPageMode(QPdfView.PageMode.MultiPage)
         self.view.setZoomMode(QPdfView.ZoomMode.FitToWidth)
         self.view.setPageSpacing(12)
-        # Deep dark canvas background
-        self.view.setStyleSheet(f"background:{CANVAS_ALT};border:none;")
+        # QSS handles canvas background via theme
+        # view.setStyleSheet removed
 
         self.error_label = QLabel()
         self.error_label.setAlignment(Qt.AlignCenter)
         self.error_label.setWordWrap(True)
-        self.error_label.setStyleSheet(f"color:{TEXT_MUTED};font-size:13px;padding:24px;")
+        # QSS handles color/padding via object name
+        # error_label.setStyleSheet removed
         self.error_label.setVisible(False)
 
         layout.addWidget(self.error_label)

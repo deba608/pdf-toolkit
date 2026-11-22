@@ -67,16 +67,8 @@ class FileListWidget(QWidget):
 
     def _build_empty_zone(self) -> QWidget:
         w = QFrame()
-        w.setStyleSheet(
-            f"QFrame{{"
-            f"  background:{CANVAS_ALT};"
-            f"  border:2px dashed {BORDER};"
-            f"  border-radius:{RADIUS_MD}px;"
-            f"}}"
-            f"QFrame:hover{{"
-            f"  border-color:{PRIMARY};"
-            f"}}"
-        )
+        w.setObjectName("EmptyZone")
+        # QSS handles styling via theme; no inline style needed
         v = QVBoxLayout(w)
         v.setAlignment(Qt.AlignCenter)
         v.setSpacing(10)
@@ -89,12 +81,12 @@ class FileListWidget(QWidget):
 
         title = QLabel("Library is Empty")
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"font-size:14px;font-weight:600;color:{TEXT_1};background:transparent;border:none;")
+        title.setObjectName("EmptyTitle")
 
         desc = QLabel("Drag & drop PDF files here\nor choose files from your computer")
         desc.setAlignment(Qt.AlignCenter)
         desc.setWordWrap(True)
-        desc.setStyleSheet(f"font-size:12px;color:{TEXT_2};background:transparent;border:none;")
+        desc.setObjectName("EmptyDesc")
 
         browse_btn = QPushButton("  Browse PDFs…")
         browse_btn.setObjectName("Primary")

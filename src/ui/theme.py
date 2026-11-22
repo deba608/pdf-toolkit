@@ -234,6 +234,34 @@ QFrame#NoFileBanner QLabel#NoFileLabel {{
     font-weight: 500;
 }}
 
+/* ---------- Preview toolbar ---------- */
+QFrame#PreviewToolbar {{
+    background: {CANVAS_ELV};
+    border-bottom: 1px solid {BORDER_SUBTLE};
+    padding: 4px 8px;
+}}
+
+/* ---------- Page count label ---------- */
+QLabel#PageCountLabel {{
+    color: {TEXT_2};
+    font-size: 12px;
+    margin-right: 6px;
+}}
+
+/* ---------- Zoom label ---------- */
+QLabel#ZoomLabel {{
+    color: {TEXT_1};
+    font-size: 12px;
+    font-weight: 600;
+}}
+
+/* ---------- Error label ---------- */
+QLabel#ErrorLabel {{
+    color: {TEXT_MUTED};
+    font-size: 13px;
+    padding: 24px;
+}}
+
 /* ---------- Primary button ---------- */
 QPushButton#Primary {{
     background: {PRIMARY};
