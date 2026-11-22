@@ -6,7 +6,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/PySide6-6.12-41CD52?style=for-the-badge&logo=qt&logoColor=white)
-![PyMuPDF](https://img.shields.io/badge/PyMuPDF-1.28-FF6B35?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)
+![PyMuPDF](https://img.shields.io/badge/PyMuPDF-2.1-FF6B35?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D4?style=for-the-badge&logo=windows&logoColor=white)
 ![Build](https://img.shields.io/badge/Build-PyInstaller-FF69B4?style=for-the-badge)
@@ -44,10 +44,10 @@ PDF Toolkit is a **completely offline** desktop application built with Python, Q
 ### 📄 Core Operations
 | Feature | Description |
 |---------|-------------|
-| **Merge** | Combine multiple PDFs into a single document with drag-drop reordering |
-| **Split** | Split by page ranges, every N pages, or extract specific pages |
-| **Rotate** | Rotate pages 90°, 180°, or 270° (individual or batch) |
-| **Reorder** | Drag-and-drop page reordering with live preview |
+| **Merge** | Combine multiple PDFs into a single document, in library order |
+| **Split** | Split into chunks of N pages |
+| **Rotate** | Rotate selected pages (or all) by 90°, 180°, or 270° |
+| **Reorder** | Rearrange or drop pages by entering a new 1-based order |
 
 ### 🎨 Content & Appearance
 | Feature | Description |
@@ -58,7 +58,7 @@ PDF Toolkit is a **completely offline** desktop application built with Python, Q
 | Feature | Description |
 |---------|-------------|
 | **Encrypt** | AES-256 encryption with user/owner passwords |
-| **Permissions** | Control printing, copying, editing, annotating, form filling, accessibility |
+| **Permissions** | Three presets: no permissions, allow printing, allow all |
 | **Decrypt** | Remove passwords and restrictions (with valid password) |
 
 ### 📦 Optimization & Conversion
@@ -154,22 +154,22 @@ Download the latest release from the [Releases page](https://github.com/deba608/
 
 #### Merge Multiple PDFs
 ```
-Files tab → Drag 3+ PDFs → Reorder by dragging → Tools tab → Merge → Set output path → Merge
+Home → Add 3+ PDFs → Drag rows into order → Sidebar: Merge → Set output path → Merge PDFs
 ```
 
 #### Split a Large PDF
 ```
-Files tab → Open large.pdf → Tools tab → Split → "Every 10 pages" → Choose output folder → Split
+Home → Open large.pdf → Sidebar: Split → "Pages per file" (e.g. 10) → Choose output folder → Split PDF
 ```
 
 #### Add Confidential Watermark
 ```
-Files tab → Open document → Tools tab → Watermark → Text: "CONFIDENTIAL" → Opacity: 30% → Size: 60 → Add Watermark
+Home → Open document → Sidebar: Watermark → Text: "CONFIDENTIAL" → Opacity: 0.3 → Size: 48 → Add Watermark
 ```
 
 #### Encrypt for Secure Sharing
 ```
-Files tab → Open document → Tools tab → Encrypt → User Password: [strong] → Owner Password: [different] → Permissions: "Allow printing only" → Encrypt
+Home → Open document → Sidebar: Encrypt → User Password: [strong] → Owner Password: [different] → Permissions: "Allow printing only" → Encrypt PDF
 ```
 
 ---
@@ -183,30 +183,32 @@ pip install pyinstaller
 
 ### Build Command
 ```bash
-# Windows
+# Fast incremental onedir build (development, ~1 min after the first run)
 python build.py
 
-# macOS (creates .app bundle)
-python build.py --macos
+# Full one-file release build
+python build.py --release
 
-# Linux (creates AppImage)
-python build.py --linux
+# PowerShell wrappers
+./rebuild.ps1            # fast
+./rebuild.ps1 release    # release
 ```
 
 ### Build Output
 ```
 dist/
-├── PDF Toolkit.exe          # Windows (~65 MB)
-├── PDF Toolkit.app/         # macOS (~70 MB)
-└── PDF Toolkit/             # Linux (~75 MB)
+├── PDF Toolkit/
+│   └── PDF Toolkit.exe      # fast build: onedir folder
+└── PDF Toolkit.exe          # release build: single file
 ```
 
-### Customization
-Edit `build.py` to:
-- Change app name, version, icon
-- Add/remove hidden imports
-- Configure code signing (Windows/macOS)
-- Create installers (NSIS, DMG, DEB/RPM)
+The version shown in the executable metadata comes from
+`src/__version__.py`. Edit that file to bump the release.
+
+### What gets bundled
+Only the Qt modules the app imports (`QtCore`, `QtGui`, `QtWidgets`,
+`QtPdf`, `QtPdfWidgets`, `QtNetwork`, `QtPrintSupport`). QtWebEngine is
+explicitly excluded, so the build stays small and works fully offline.
 
 ---
 
@@ -215,27 +217,26 @@ Edit `build.py` to:
 ```
 pdf-toolkit/
 ├── src/
-│   ├── main.py                    # Application entry point
+│   ├── main.py                    # Application entry point (DPI policy, Fusion style)
+│   ├── __version__.py             # Single source of truth for the version
+│   ├── paths.py                   # resource_path(): works from source and PyInstaller
 │   ├── core/
-│   │   ├── models.py              # Data models (PdfFile, PdfPage, Job)
-│   │   ├── pdf_engine.py          # PyMuPDF wrapper — all PDF operations
-│   │   └── commands.py            # Command pattern for undo/redo
+│   │   ├── models.py              # PdfFile, PdfPage, OperationResult
+│   │   └── pdf_engine.py          # PyMuPDF wrapper — every PDF operation
 │   ├── ui/
-│   │   ├── main_window.py         # MainWindow, tabs, menus, toolbar
-│   │   ├── theme.py               # Dark/light theme management
-│   │   ├── shortcuts.py           # Keyboard shortcut registry
+│   │   ├── main_window.py         # MainWindow: sidebar nav, menus, threading, wiring
+│   │   ├── theme.py               # Dark theme palette + QSS tokens
 │   │   └── widgets/
-│   │       ├── file_list.py       # Draggable file/page list widget
-│   │       ├── preview.py         # PDF.js viewer in QWebEngineView
-│   │       ├── tool_panels.py     # Parameter panels for each tool
-│   │       ├── progress.py        # Job queue with progress tracking
-│   │       └── dialogs.py         # Password, save-as, settings dialogs
+│   │       ├── file_list.py       # Draggable library list
+│   │       ├── preview.py         # Native QtPdf preview (QPdfView)
+│   │       ├── tool_panels.py     # Parameter panel for each tool
+│   │       └── batch_view.py      # Queue runner with per-file status
 │   └── resources/
-│       ├── icons/                 # SVG icons (Material Design)
-│       ├── viewer.html            # PDF.js viewer template
-│       └── themes/                # QSS stylesheets
-├── tests/                         # pytest + pytest-qt test suite
+│       ├── icon.ico
+│       └── icon.png
+├── tests/                         # Plain-Python test scripts (no pytest needed)
 ├── build.py                       # PyInstaller build script
+├── PDF Toolkit.spec               # Equivalent spec file (build.py preferred)
 ├── requirements.txt               # Python dependencies
 ├── LICENSE                        # MIT License
 └── README.md                      # This file
@@ -245,12 +246,12 @@ pdf-toolkit/
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **GUI Framework** | PySide6 (Qt 6.12) | Native cross-platform widgets, high-DPI, accessibility |
-| **PDF Engine** | PyMuPDF (fitz) 1.28 | Fast, comprehensive PDF manipulation (C backend) |
-| **Preview** | PDF.js 4.x + QWebEngineView | Faithful rendering, zoom, search, text selection |
+| **GUI Framework** | PySide6 (Qt 6) | Native cross-platform widgets, high-DPI, accessibility |
+| **PDF Engine** | PyMuPDF (fitz) | Fast PDF manipulation and rendering (C backend) |
+| **Preview** | QtPdf (`QPdfView`) | Native, offline, zoomable rendering |
 | **Threading** | QThreadPool + QRunnable | Non-blocking UI during heavy operations |
-| **Packaging** | PyInstaller | Single-file executables, no dependencies |
-| **Testing** | pytest + pytest-qt | Unit + integration tests with Qt event loop |
+| **Packaging** | PyInstaller | Standalone executables, no dependencies |
+| **Testing** | Plain Python scripts | Headless (`QT_QPA_PLATFORM=offscreen`) engine + UI tests |
 
 ### Design Principles
 
@@ -265,34 +266,33 @@ pdf-toolkit/
 
 ## 🧪 Testing
 
+The suite is plain Python — no pytest plugin required. Each script prints
+PASS/FAIL lines and exits non-zero on failure.
+
 ```bash
-# Run all tests
-pytest -v
+# Engine-level checks (14 operations)
+.venv\Scripts\python.exe tests\test_all_features.py
 
-# Run with coverage
-pytest --cov=src --cov-report=html
+# Tool-panel → engine wiring (10 panels)
+$env:QT_QPA_PLATFORM="offscreen"
+.venv\Scripts\python.exe tests\test_ui_wiring.py
 
-# Run GUI tests (requires display)
-pytest tests/ui/ -v
+# Full MainWindow flow (11 operations incl. batch)
+.venv\Scripts\python.exe tests\test_e2e_ui.py
 
-# Type checking
-mypy src/
+# Regression tests for the flow fixes
+.venv\Scripts\python.exe tests\test_flow_fixes.py
 ```
 
 ### Test Structure
 ```
 tests/
-├── unit/
-│   ├── test_models.py
-│   ├── test_pdf_engine.py
-│   └── test_commands.py
-├── integration/
-│   ├── test_merge.py
-│   ├── test_split.py
-│   └── test_encrypt.py
-└── ui/
-    ├── test_main_window.py
-    └── test_tool_panels.py
+├── test_all_features.py    # every PdfEngine operation
+├── test_ui_wiring.py       # each tool panel emits the right engine call
+├── test_e2e_ui.py          # drives a real MainWindow end to end
+├── test_flow_fixes.py      # regressions: page parsing, overwrite guard, dedupe
+├── test_ui_operations.py   # headless operation smoke test
+└── test_ui_check.py        # inspects widget state for UI regressions
 ```
 
 ---
@@ -334,10 +334,10 @@ mypy src/
 
 ### v1.1 (Next Release)
 - [ ] OCR integration (Tesseract)
-- [ ] Batch processing queue
 - [ ] Settings persistence (QSettings)
 - [ ] Custom keyboard shortcuts
 - [ ] Page thumbnails in file list
+- [ ] Preview text search
 
 ### v1.2
 - [ ] Digital signatures (sign/verify)
@@ -357,9 +357,10 @@ mypy src/
 
 | Issue | Status | Workaround |
 |-------|--------|------------|
-| WebEngine may not render on some Linux Wayland compositors | Investigating | Use X11 session or set `QT_QPA_PLATFORM=xcb` |
+| Preview text search / selection is not available | Planned (v1.1) | Use another reader for searching |
 | Large PDFs (>500 MB) may cause memory pressure | By design | Split first, then process |
-| Encrypted PDFs with unknown encryption handlers | PyMuPDF limitation | Decrypt with Adobe Acrobat first |
+| Encrypted PDFs with unknown encryption handlers | PyMuPDF limitation | Decrypt with another tool first |
+| Binary is not code-signed | By design | SmartScreen: More info → Run anyway |
 
 Report new issues at [GitHub Issues](https://github.com/deba608/pdf-toolkit/issues).
 
@@ -368,9 +369,8 @@ Report new issues at [GitHub Issues](https://github.com/deba608/pdf-toolkit/issu
 ## 🙏 Acknowledgments
 
 - **[PyMuPDF](https://pymupdf.readthedocs.io/)** — Incredible PDF engine by Artifex
-- **[PDF.js](https://mozilla.github.io/pdf.js/)** — Mozilla's PDF viewer
+- **[Qt / QtPdf](https://doc.qt.io/qt-6/qtpdf-index.html)** — Native PDF rendering
 - **[PySide6](https://wiki.qt.io/Qt_for_Python)** — Qt for Python by The Qt Company
-- **[Material Design Icons](https://fonts.google.com/icons)** — Google Fonts icons
 
 ---
 

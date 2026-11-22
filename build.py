@@ -20,7 +20,13 @@ import shutil
 import sys
 from pathlib import Path
 
-import PyInstaller.__main__
+try:
+    import PyInstaller.__main__
+except ModuleNotFoundError:  # pragma: no cover - developer machine setup
+    sys.exit(
+        "PyInstaller is not installed in this environment.\n"
+        "Install it first:  pip install pyinstaller"
+    )
 
 from src.__version__ import __version__
 

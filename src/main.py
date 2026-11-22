@@ -1,4 +1,10 @@
 import sys
+from pathlib import Path
+
+# Allow both `python -m src.main` and `python src/main.py` (the PyInstaller
+# entry script) to resolve the `src` package from a source checkout.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon

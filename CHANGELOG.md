@@ -8,36 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project structure with PySide6 + PyMuPDF
-- Core PDF operations: merge, split, rotate, reorder
-- Content tools: watermark, page numbers, headers/footers
-- Security: encrypt (AES-256), decrypt, permissions
-- Optimization: compress, linearize
-- Conversion: PDF ↔ Images, Images → PDF
-- Drag-drop file loading with reordering
-- PDF.js preview with zoom, search, text selection
-- Keyboard shortcuts for all major actions
-- Dark/light theme support (system detection)
-- Professional README with badges, screenshots, usage guide
-- MIT License
-- Comprehensive USER_GUIDE.md
-- CONTRIBUTING.md guidelines
-- PyInstaller build script for standalone executables
+- Native `QPdfView` preview with zoom in/out/reset and password support
+  (replaces the CDN-dependent PDF.js/WebEngine viewer)
+- Batch run view: apply one operation to every loaded PDF with per-file
+  status, and add the produced files back to the library
+- Keyboard shortcuts: `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+B`,
+  `Ctrl++`/`Ctrl+-`/`Ctrl+0`, `Delete`, `F1`, `Ctrl+Q`
+- `src/paths.py` for correct resource lookup in frozen (PyInstaller) builds
+- Regression test suite (`tests/test_flow_fixes.py`)
 
 ### Changed
-- N/A (initial release)
-
-### Deprecated
-- N/A
+- Compression now actually downsamples/re-encodes images and subsets fonts;
+  the quality control is respected (previously it was ignored)
+- The library de-duplicates files by full path
+- Fast onedir build mode by default; release mode is opt-in
+- PyInstaller collects only the Qt modules the app imports
 
 ### Removed
-- N/A
+- QtWebEngine / PDF.js preview and `viewer.html`
+- Unused `progress.py` widget and the Pillow dependency
 
 ### Fixed
-- N/A
-
-### Security
-- N/A
+- Reorder panel applied 1-based page numbers as 0-based indices, producing
+  out-of-range pages (`3,1,2` became `[3,1,2]`)
+- Invalid page text raised an uncaught `ValueError` inside a Qt slot; the
+  panels now emit a validation signal that shows a message box
+- Operations could silently overwrite their own source file; the engine now
+  refuses to write over an input
+- `PdfFile.is_encrypted` reported `False` for files opened with a password
+- Busy state could stay stuck after an operation finished or failed
+- Delete shortcut was registered twice (widget + menu)
+- Icons/resources were not found in frozen builds
 
 ---
 
@@ -45,10 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - First public release
-- All core PDF manipulation features
-- Offline-first architecture
-- Cross-platform support (Windows, macOS, Linux)
-- Professional documentation
+- Core operations: merge, split, rotate, reorder, watermark
+- Security: AES-256 encrypt, decrypt, permission flags
+- Optimization: compress
+- Conversion: PDF → Images, Images → PDF
+- Drag & drop file loading with reordering
+- Dark theme
+- Offline-first architecture with no network calls
+- Documentation (README, USER_GUIDE, CONTRIBUTING, CODE_OF_CONDUCT)
+- PyInstaller build script for standalone executables
 
 ---
 
