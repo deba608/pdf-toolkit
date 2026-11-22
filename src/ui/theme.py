@@ -1,25 +1,27 @@
 """Design tokens and QSS stylesheet for the PDF Toolkit UI.
 
 Modern, sleek dark theme tuned for a professional desktop aesthetic.
+Follows strict craft floor standards: no nested cards, no raw unicode symbols,
+no thick left-border hacks, high contrast ratios, and refined typography.
 """
 
 # ---- Design tokens ----
-BG_0 = "#0d1117"        # main window / deepest canvas background
-BG_1 = "#161b22"        # elevated surfaces / cards / sidebar
-BG_2 = "#21262d"        # inputs / list rows / chips / secondary buttons
-BG_3 = "#30363d"        # hovered rows / active input borders
-BORDER = "#30363d"      # subtle container borders
+BG_0 = "#0d1117"          # main window canvas
+BG_1 = "#161b22"          # primary surface / sidebar / tool cards
+BG_2 = "#21262d"          # secondary surface / inputs / toolbars / chips
+BG_3 = "#30363d"          # hover surface / active states
+BORDER = "#30363d"        # subtle container borders
 BORDER_STRONG = "#484f58" # emphasized / focused borders
 
-TEXT = "#f0f6fc"        # high-contrast primary text
-TEXT_MUTED = "#8b949e"  # secondary text / subtitles / metadata
-TEXT_FAINT = "#6e7681"  # placeholders / captions / hints
+TEXT = "#f0f6fc"          # high-contrast primary text
+TEXT_MUTED = "#8b949e"    # secondary text / subtitles / metadata
+TEXT_FAINT = "#6e7681"    # placeholders / captions / hints
 
-ACCENT = "#2f81f7"       # primary brand blue
-ACCENT_HOVER = "#388bfd" # vibrant blue on hover
+ACCENT = "#2f81f7"         # primary brand blue
+ACCENT_HOVER = "#388bfd"   # vibrant blue on hover
 ACCENT_PRESSED = "#1f6feb" # deep blue on click
-ACCENT_SOFT = "#121d2f"  # subtle accent background tint for selected items
-ACCENT_BORDER = "#1f6feb"# border for accent elements
+ACCENT_SOFT = "#192338"    # subtle accent background tint for selected items
+ACCENT_BORDER = "#2f81f7"  # border for accent elements
 
 DANGER = "#f85149"
 DANGER_BG = "rgba(248, 81, 73, 0.12)"
@@ -36,7 +38,7 @@ RADIUS_LG = 10
 STYLESHEET = f"""
 /* ---------- Base ---------- */
 * {{
-    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif;
     font-size: 13px;
     color: {TEXT};
 }}
@@ -69,6 +71,7 @@ QListWidget#Sidebar::item {{
     color: {TEXT_MUTED};
     font-size: 13px;
     font-weight: 500;
+    border: 1px solid transparent;
 }}
 QListWidget#Sidebar::item:hover {{
     background: {BG_2};
@@ -78,21 +81,18 @@ QListWidget#Sidebar::item:selected {{
     background: {ACCENT_SOFT};
     color: #ffffff;
     font-weight: 600;
-    border-left: 3px solid {ACCENT};
-    padding-left: 9px;
+    border: 1px solid rgba(47, 129, 247, 0.4);
 }}
 
 QLabel#SidebarTitle {{
     color: {TEXT};
     font-size: 16px;
     font-weight: 700;
-    padding: 14px 14px 2px 14px;
     letter-spacing: -0.3px;
 }}
 QLabel#SidebarSubtitle {{
     color: {TEXT_FAINT};
     font-size: 11px;
-    padding: 0 14px 12px 14px;
 }}
 QLabel#SidebarSection {{
     color: {TEXT_FAINT};
@@ -107,8 +107,8 @@ QLabel#SidebarSection {{
 QFrame#Header {{
     background: {BG_1};
     border-bottom: 1px solid {BORDER};
-    min-height: 58px;
-    max-height: 58px;
+    min-height: 56px;
+    max-height: 56px;
 }}
 QLabel#HeaderTitle {{
     color: {TEXT};
@@ -121,7 +121,7 @@ QLabel#HeaderSubtitle {{
     font-size: 12px;
 }}
 
-/* ---------- Cards ---------- */
+/* ---------- Cards & Panels ---------- */
 QFrame.Card {{
     background: {BG_1};
     border: 1px solid {BORDER};
@@ -144,8 +144,15 @@ QLabel.FieldLabel {{
 }}
 QLabel.Hint {{
     color: {TEXT_MUTED};
-    font-size: 11px;
-    line-height: 14px;
+    font-size: 12px;
+    line-height: 16px;
+}}
+QLabel.SectionHeading {{
+    color: {TEXT};
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    padding-top: 6px;
 }}
 
 /* ---------- Inputs ---------- */
@@ -155,7 +162,7 @@ QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QTextEdit, QPlainTextEdit {{
     border-radius: {RADIUS_SM}px;
     padding: 7px 11px;
     color: {TEXT};
-    min-height: 18px;
+    min-height: 20px;
     selection-background-color: {ACCENT};
     selection-color: #ffffff;
 }}
@@ -176,7 +183,7 @@ QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabl
 }}
 
 QComboBox {{
-    padding-right: 24px;
+    padding-right: 26px;
 }}
 QComboBox::drop-down {{
     subcontrol-origin: padding;
@@ -244,7 +251,7 @@ QPushButton {{
     border-radius: {RADIUS_SM}px;
     padding: 7px 14px;
     font-weight: 500;
-    min-height: 18px;
+    min-height: 20px;
 }}
 QPushButton:hover {{
     background: {BG_3};
@@ -308,17 +315,23 @@ QPushButton#Danger:hover {{
 }}
 
 QPushButton#PresetBtn {{
-    background: {BG_1};
+    background: {BG_2};
     border: 1px solid {BORDER};
-    border-radius: 4px;
-    padding: 4px 10px;
-    font-size: 11px;
+    border-radius: {RADIUS_SM}px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
     color: {TEXT_MUTED};
 }}
 QPushButton#PresetBtn:hover {{
-    background: {BG_2};
-    border: 1px solid {ACCENT};
+    background: {BG_3};
+    border: 1px solid {BORDER_STRONG};
     color: {TEXT};
+}}
+QPushButton#PresetBtn:checked, QPushButton#PresetBtn:pressed {{
+    background: {ACCENT_SOFT};
+    border: 1px solid {ACCENT};
+    color: #ffffff;
 }}
 
 /* ---------- File list & Drop Zone ---------- */
@@ -330,16 +343,16 @@ QListWidget#FileList {{
     outline: 0;
 }}
 QListWidget#FileList::item {{
-    background: transparent;
-    border: 1px solid transparent;
+    background: {BG_2};
+    border: 1px solid {BORDER};
     border-radius: {RADIUS_SM}px;
     padding: 8px 10px;
-    margin: 2px 0;
+    margin: 3px 0;
     color: {TEXT};
 }}
 QListWidget#FileList::item:hover {{
-    background: {BG_2};
-    border: 1px solid {BORDER};
+    background: {BG_3};
+    border: 1px solid {BORDER_STRONG};
 }}
 QListWidget#FileList::item:selected {{
     background: {ACCENT_SOFT};
@@ -352,7 +365,7 @@ QStatusBar {{
     background: {BG_1};
     border-top: 1px solid {BORDER};
     color: {TEXT_MUTED};
-    padding: 3px 12px;
+    padding: 3px 14px;
     font-size: 12px;
 }}
 QStatusBar::item {{
@@ -416,13 +429,13 @@ QMenu::separator {{
 
 /* ---------- Splitter ---------- */
 QSplitter::handle {{
-    background: {BG_0};
+    background: {BORDER};
 }}
 QSplitter::handle:horizontal {{
-    width: 6px;
+    width: 1px;
 }}
 QSplitter::handle:vertical {{
-    height: 6px;
+    height: 1px;
 }}
 
 /* ---------- Scrollbars ---------- */
@@ -472,7 +485,7 @@ QTreeWidget {{
     padding: 4px;
 }}
 QTreeWidget::item {{
-    padding: 8px;
+    padding: 8px 6px;
     border-radius: 4px;
 }}
 QTreeWidget::item:hover {{
@@ -485,14 +498,14 @@ QTreeWidget::item:selected {{
 QHeaderView::section {{
     background: {BG_2};
     color: {TEXT_MUTED};
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: none;
     border-right: 1px solid {BORDER};
     border-bottom: 1px solid {BORDER};
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
 }}
 
 /* ---------- Dialogs ---------- */

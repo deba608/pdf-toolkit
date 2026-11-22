@@ -3,15 +3,17 @@ import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QIcon
+from PySide6.QtGui import QAction, QColor, QFont, QIcon
 from PySide6.QtWidgets import (
     QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
     QListWidgetItem, QMenu, QPushButton, QStackedWidget, QVBoxLayout, QWidget
 )
 
 from src.core.models import PdfFile
-from src.ui.theme import (ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, TEXT,
-                          TEXT_FAINT, TEXT_MUTED)
+from src.ui.icons import get_icon, get_pixmap
+from src.ui.theme import (
+    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED
+)
 
 
 class FileListWidget(QWidget):
@@ -31,12 +33,13 @@ class FileListWidget(QWidget):
 
         # Search / filter bar
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("🔍  Filter loaded PDFs…")
+        self.search_bar.setPlaceholderText("Filter files by name…")
         self.search_bar.setClearButtonEnabled(True)
+        self.search_bar.addAction(get_icon("search", TEXT_MUTED, 14), QLineEdit.LeadingPosition)
         self.search_bar.textChanged.connect(self._filter_items)
         layout.addWidget(self.search_bar)
 
-        # Stack to toggle between empty drop zone and actual file list
+        # Stack to toggle between empty drop zone and file list
         self.stack = QStackedWidget()
 
         # 0: File list
@@ -46,6 +49,7 @@ class FileListWidget(QWidget):
         self.list.setDefaultDropAction(Qt.MoveAction)
         self.list.setSelectionMode(QListWidget.SingleSelection)
         self.list.setFrameShape(QFrame.NoFrame)
+        self.list.setIconSize(QSize(24, 24))
         self.list.currentItemChanged.connect(self._on_selection_changed)
         self.list.model().rowsMoved.connect(self._on_rows_moved)
         self.list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -74,30 +78,32 @@ class FileListWidget(QWidget):
         v = QVBoxLayout(w)
         v.setAlignment(Qt.AlignCenter)
         v.setSpacing(10)
-        v.setContentsMargins(20, 24, 20, 24)
+        v.setContentsMargins(20, 28, 20, 28)
 
-        icon = QLabel("📄")
-        icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet(f"font-size:36px;background:transparent;border:none;")
+        icon_label = QLabel()
+        icon_label.setPixmap(get_pixmap("pdf", TEXT_MUTED, 38))
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet("background:transparent;border:none;")
 
-        title = QLabel("No PDFs Loaded")
+        title = QLabel("Library is Empty")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(f"font-size:14px;font-weight:600;color:{TEXT};background:transparent;border:none;")
 
-        desc = QLabel("Drag & drop PDF files here\nor click the button below to browse")
+        desc = QLabel("Drag & drop PDF files here\nor choose files from your computer")
         desc.setAlignment(Qt.AlignCenter)
         desc.setWordWrap(True)
         desc.setStyleSheet(f"font-size:12px;color:{TEXT_MUTED};background:transparent;border:none;")
 
-        browse_btn = QPushButton("+ Browse PDFs")
+        browse_btn = QPushButton("  Browse PDFs…")
         browse_btn.setObjectName("Primary")
-        browse_btn.setMinimumHeight(32)
+        browse_btn.setIcon(get_icon("add", "#ffffff", 14))
+        browse_btn.setMinimumHeight(34)
         browse_btn.clicked.connect(lambda: self.open_requested.emit())
 
-        v.addWidget(icon)
+        v.addWidget(icon_label)
         v.addWidget(title)
         v.addWidget(desc)
-        v.addSpacing(4)
+        v.addSpacing(6)
         v.addWidget(browse_btn)
         return w
 
@@ -117,9 +123,10 @@ class FileListWidget(QWidget):
     def add_file(self, pdf: PdfFile):
         self._files.append(pdf)
         item = QListWidgetItem(self._label(pdf))
+        item.setIcon(get_icon("pdf", DANGER, 22))
         item.setData(Qt.UserRole, pdf)
         item.setToolTip(f"{pdf.path}\nPages: {pdf.page_count} | Size: {pdf.size_mb:.2f} MB")
-        item.setSizeHint(QSize(0, 44))
+        item.setSizeHint(QSize(0, 50))
         self.list.addItem(item)
         self._update_empty_state()
 
@@ -129,6 +136,7 @@ class FileListWidget(QWidget):
             existing = item.data(Qt.UserRole)
             if existing.path == pdf.path:
                 item.setText(self._label(pdf))
+                item.setIcon(get_icon("pdf", DANGER, 22))
                 item.setData(Qt.UserRole, pdf)
                 item.setToolTip(f"{pdf.path}\nPages: {pdf.page_count} | Size: {pdf.size_mb:.2f} MB")
                 self._files[i] = pdf
@@ -161,8 +169,7 @@ class FileListWidget(QWidget):
     # ---------- internals ----------
     @staticmethod
     def _label(pdf: PdfFile) -> str:
-        # Formatted cleanly with document icon and metadata line
-        return f"  📄  {pdf.name}\n        {pdf.page_count} pages  •  {pdf.size_mb:.2f} MB"
+        return f"{pdf.name}\n{pdf.page_count} page{'s' if pdf.page_count != 1 else ''}  •  {pdf.size_mb:.2f} MB"
 
     def _filter_items(self, query: str):
         query = query.strip().lower()
@@ -189,10 +196,10 @@ class FileListWidget(QWidget):
         pdf: PdfFile = item.data(Qt.UserRole)
         menu = QMenu(self)
 
-        remove_act = menu.addAction("✕  Remove from Library")
+        remove_act = menu.addAction(get_icon("trash", DANGER, 14), "Remove from Library")
         menu.addSeparator()
-        open_folder_act = menu.addAction("📁  Open Containing Folder")
-        copy_path_act = menu.addAction("📋  Copy Full Path")
+        open_folder_act = menu.addAction(get_icon("home", TEXT_MUTED, 14), "Open Containing Folder")
+        copy_path_act = menu.addAction("Copy Full Path")
 
         chosen = menu.exec(self.list.mapToGlobal(pos))
         if chosen == remove_act:
