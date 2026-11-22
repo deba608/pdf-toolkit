@@ -32,7 +32,11 @@ class PdfFile:
 
     @property
     def size_mb(self) -> float:
-        return self.path.stat().st_size / (1024 * 1024)
+        try:
+            return self.path.stat().st_size / (1024 * 1024)
+        except OSError:
+            # File moved/deleted after loading — don't crash the UI.
+            return 0.0
 
 
 @dataclass
