@@ -1,20 +1,25 @@
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRunnable, QSize, Qt, QThreadPool, Signal
-from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QIcon
+from PySide6.QtCore import (
+    QObject, QPoint, QRect, QRunnable, QSettings, QSize, Qt, QThreadPool, Signal
+)
+from PySide6.QtGui import (
+    QAction, QCursor, QDragEnterEvent, QDropEvent, QGuiApplication, QIcon
+)
 from PySide6.QtWidgets import (
     QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QProgressBar,
     QPushButton, QScrollArea, QSplitter, QStackedWidget, QStatusBar, QVBoxLayout,
-    QWidget,
+    QWidget
 )
 
 from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
 from src.paths import resource_path
-from src.ui.theme import (BG_1, BORDER, BORDER_STRONG, TEXT_FAINT, TEXT_MUTED,
-                          WARN)
+from src.ui.theme import (
+    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
+)
 from src.ui.widgets.batch_view import BatchView
 from src.ui.widgets.file_list import FileListWidget
 from src.ui.widgets.preview import PreviewWidget
@@ -38,29 +43,28 @@ class PdfWorker(QRunnable):
     def run(self):
         try:
             self.signals.finished.emit(self.fn(*self.args, **self.kwargs))
-        except Exception as e:  # noqa: BLE001 - surfaced to the user as a dialog
+        except Exception as e:  # noqa: BLE001 - surfaced to user as dialog
             self.signals.error.emit(str(e))
 
 
 # Sidebar nav items: (key, label, icon-text, section, description)
-# key "home" = file manager; "images to pdf" has no selected file requirement
 NAV_ITEMS = [
-    ("home",          "Home",           "⌂",  "Library",    "Open and manage PDFs"),
+    ("home",          "Home",           "⌂",  "Library",    "Manage & preview loaded PDFs"),
     # Tools
-    ("merge",         "Merge",          "☰",  "Tools",      "Combine multiple PDFs"),
-    ("split",         "Split",          "✂",  "Tools",      "Split a PDF into parts"),
-    ("rotate",        "Rotate",         "↻",  "Tools",      "Rotate pages 90/180/270"),
-    ("reorder",       "Reorder",        "⇅",  "Tools",      "Rearrange page order"),
-    ("watermark",     "Watermark",      "❖",  "Tools",      "Add text watermark"),
-    ("compress",      "Compress",       "↓",  "Tools",      "Reduce file size"),
+    ("merge",         "Merge",          "⧉",  "Tools",      "Combine multiple PDFs into one"),
+    ("split",         "Split",          "✂",  "Tools",      "Split a PDF into smaller files"),
+    ("rotate",        "Rotate",         "↻",  "Tools",      "Rotate pages 90°, 180°, or 270°"),
+    ("reorder",       "Reorder",        "⇅",  "Tools",      "Rearrange or drop specific pages"),
+    ("watermark",     "Watermark",      "❖",  "Tools",      "Stamp a text watermark on pages"),
+    ("compress",      "Compress",       "⤓",  "Tools",      "Reduce file size with lossless optimization"),
     # Security
-    ("encrypt",       "Encrypt",        "\U0001F512", "Security", "Password-protect a PDF"),
-    ("decrypt",       "Decrypt",        "\U0001F513", "Security", "Remove password"),
+    ("encrypt",       "Encrypt",        "🔒", "Security",   "Password-protect with AES-256"),
+    ("decrypt",       "Decrypt",        "🔓", "Security",   "Remove password protection"),
     # Convert
-    ("to images",     "PDF → Images",   "⇒",  "Convert",    "Export pages as PNG/JPG"),
-    ("images to pdf", "Images → PDF",   "⇐",  "Convert",    "Build PDF from images"),
+    ("to images",     "PDF → Images",   "⇥",  "Convert",    "Export PDF pages to PNG/JPG"),
+    ("images to pdf", "Images → PDF",   "⇤",  "Convert",    "Create a PDF from images"),
     # Batch
-    ("batch",         "Batch run",      "⧉",  "Automation", "Apply one operation to all loaded PDFs"),
+    ("batch",         "Batch run",      "⚡",  "Automation", "Apply an operation to all loaded PDFs"),
 ]
 
 
@@ -68,8 +72,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PDF Toolkit")
-        self.resize(1280, 820)
-        self.setMinimumSize(1024, 680)
         self.setAcceptDrops(True)
 
         icon_path = resource_path("icon.ico")
@@ -80,19 +82,74 @@ class MainWindow(QMainWindow):
         self.current_file: PdfFile | None = None
         self.files: list[PdfFile] = []
         self._busy = False
-        # Hold PdfWorker instances alive until their signals have been dispatched.
-        # QRunnable auto-deletes after run() returns, which can destroy the
-        # WorkerSignals QObject before Qt delivers the queued finished signal
-        # for fast operations — the callback then silently never fires.
         self._active_workers: set = set()
 
         self._build_ui()
         self._setup_menu()
         self._setup_statusbar()
+        self._setup_geometry()
         self._update_header()
 
         # Default to Home
         self.sidebar.setCurrentRow(0)
+
+    # ---------- Responsive, screen-bounded geometry ----------
+    def _setup_geometry(self):
+        """Ensure window is centered and fits 100% inside the visible desktop area."""
+        screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
+        avail = screen.availableGeometry() if screen else QRect(0, 0, 1280, 800)
+
+        # Responsive default sizing adapted to current screen working area
+        target_w = min(1200, max(860, int(avail.width() * 0.85)))
+        target_h = min(760, max(560, int(avail.height() * 0.88)))
+
+        self.setMinimumSize(min(760, avail.width() - 40), min(500, avail.height() - 40))
+        self.resize(target_w, target_h)
+
+        # Restore previous position if valid on an existing connected screen
+        settings = QSettings("PDFToolkit", "PDFToolkit")
+        saved_geom = settings.value("geometry")
+        restored = False
+        if saved_geom:
+            self.restoreGeometry(saved_geom)
+            w_rect = self.frameGeometry()
+            # Find screen containing the majority of the window
+            target_screen = None
+            max_inter_area = 0
+            for s in QGuiApplication.screens():
+                s_avail = s.availableGeometry()
+                inter = s_avail.intersected(w_rect)
+                area = max(0, inter.width()) * max(0, inter.height())
+                if area > max_inter_area:
+                    max_inter_area = area
+                    target_screen = s
+
+            w_area = max(1, w_rect.width() * w_rect.height())
+            # Require at least 90% of the window to be cleanly inside the screen
+            if target_screen and (max_inter_area / w_area) >= 0.90:
+                avail = target_screen.availableGeometry()
+                restored = True
+            else:
+                restored = False
+
+        if not restored:
+            self.resize(target_w, target_h)
+            geo = self.frameGeometry()
+            geo.moveCenter(avail.center())
+            self.move(geo.topLeft())
+
+        # Clamp position: guarantee title bar and all edges are strictly within screen
+        cur_x = self.x()
+        cur_y = self.y()
+        clamped_x = max(avail.left(), min(cur_x, avail.right() - self.width()))
+        clamped_y = max(avail.top(), min(cur_y, avail.bottom() - self.height()))
+        self.move(clamped_x, clamped_y)
+
+    def closeEvent(self, event):
+        if not self.isMaximized() and not self.isMinimized():
+            settings = QSettings("PDFToolkit", "PDFToolkit")
+            settings.setValue("geometry", self.saveGeometry())
+        super().closeEvent(event)
 
     # ---------- Layout ----------
     def _build_ui(self):
@@ -121,18 +178,42 @@ class MainWindow(QMainWindow):
         v.setContentsMargins(0, 0, 0, 0)
         v.setSpacing(0)
 
-        title = QLabel("PDF Toolkit")
-        title.setObjectName("SidebarTitle")
-        v.addWidget(title)
+        # App brand header
+        header_widget = QWidget()
+        hv = QVBoxLayout(header_widget)
+        hv.setContentsMargins(14, 16, 14, 10)
+        hv.setSpacing(4)
 
-        sub = QLabel("Offline · Private · Fast")
+        brand_row = QHBoxLayout()
+        brand_row.setSpacing(8)
+        brand_icon = QLabel("📄")
+        brand_icon.setStyleSheet("font-size:20px;")
+        brand_title = QLabel("PDF Toolkit")
+        brand_title.setObjectName("SidebarTitle")
+        brand_title.setStyleSheet("font-size:16px;font-weight:700;padding:0;")
+        brand_row.addWidget(brand_icon)
+        brand_row.addWidget(brand_title)
+        brand_row.addStretch()
+
+        badge = QLabel("OFFLINE")
+        badge.setStyleSheet(
+            f"background:{BG_2};color:{TEXT_MUTED};font-size:9px;font-weight:700;"
+            f"border:1px solid {BORDER};border-radius:4px;padding:2px 6px;"
+        )
+        brand_row.addWidget(badge)
+        hv.addLayout(brand_row)
+
+        sub = QLabel("Fast · Private · Secure")
         sub.setObjectName("SidebarSubtitle")
-        v.addWidget(sub)
+        sub.setStyleSheet(f"color:{TEXT_FAINT};font-size:11px;padding:0 2px;")
+        hv.addWidget(sub)
+        v.addWidget(header_widget)
 
+        # Navigation list
         self.sidebar = QListWidget()
         self.sidebar.setObjectName("Sidebar")
         self.sidebar.setFrameShape(QFrame.NoFrame)
-        self.sidebar.setSpacing(0)
+        self.sidebar.setSpacing(1)
         self.sidebar.setIconSize(QSize(16, 16))
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
 
@@ -148,7 +229,7 @@ class MainWindow(QMainWindow):
                 font.setPointSize(8)
                 header_item.setFont(font)
                 header_item.setForeground(Qt.gray)
-                header_item.setText(f"   {section.upper()}")
+                header_item.setText(f"  {section.upper()}")
                 header_item.setSizeHint(QSize(0, 26))
                 self.sidebar.addItem(header_item)
                 self._nav_row_to_key.append("__section__")
@@ -157,7 +238,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(f" {glyph}   {label}")
             item.setData(Qt.UserRole, key)
             item.setToolTip(desc)
-            item.setSizeHint(QSize(0, 38))
+            item.setSizeHint(QSize(0, 36))
             self.sidebar.addItem(item)
             self._nav_row_to_key.append(key)
 
@@ -166,10 +247,10 @@ class MainWindow(QMainWindow):
         # Footer: open button
         footer = QWidget()
         fv = QVBoxLayout(footer)
-        fv.setContentsMargins(12, 8, 12, 14)
+        fv.setContentsMargins(12, 10, 12, 14)
         open_btn = QPushButton("  +  Open PDFs")
         open_btn.setObjectName("Primary")
-        open_btn.setMinimumHeight(36)
+        open_btn.setMinimumHeight(38)
         open_btn.clicked.connect(self._open_files)
         fv.addWidget(open_btn)
         v.addWidget(footer)
@@ -180,8 +261,8 @@ class MainWindow(QMainWindow):
         h = QFrame()
         h.setObjectName("Header")
         layout = QHBoxLayout(h)
-        layout.setContentsMargins(20, 10, 20, 10)
-        layout.setSpacing(12)
+        layout.setContentsMargins(20, 8, 20, 8)
+        layout.setSpacing(14)
 
         text_col = QVBoxLayout()
         text_col.setSpacing(2)
@@ -195,9 +276,36 @@ class MainWindow(QMainWindow):
 
         layout.addStretch()
 
+        # Active file badge pill in header
+        self.active_file_pill = QFrame()
+        self.active_file_pill.setStyleSheet(
+            f"QFrame{{"
+            f"  background:{BG_2};"
+            f"  border:1px solid {BORDER};"
+            f"  border-radius:6px;"
+            f"  padding:2px 8px;"
+            f"}}"
+        )
+        pill_layout = QHBoxLayout(self.active_file_pill)
+        pill_layout.setContentsMargins(6, 4, 6, 4)
+        pill_layout.setSpacing(8)
+
+        self.pill_icon = QLabel("📄")
+        self.pill_text = QLabel("No active file")
+        self.pill_text.setStyleSheet(f"color:{TEXT};font-size:12px;font-weight:500;")
+        pill_layout.addWidget(self.pill_icon)
+        pill_layout.addWidget(self.pill_text)
+
+        self.close_file_btn = QPushButton("✕")
+        self.close_file_btn.setObjectName("Ghost")
+        self.close_file_btn.setFixedSize(20, 20)
+        self.close_file_btn.setToolTip("Deselect this file")
+        self.close_file_btn.clicked.connect(self._deselect_current_file)
+        pill_layout.addWidget(self.close_file_btn)
+        self.active_file_pill.setVisible(False)
+        layout.addWidget(self.active_file_pill)
+
         self.save_btn = QPushButton("Save As…")
-        # Ctrl+S is owned by the File menu action; a button shortcut here
-        # would register a second, ambiguous shortcut.
         self.save_btn.clicked.connect(self._save_current)
         self.save_btn.setEnabled(False)
         layout.addWidget(self.save_btn)
@@ -244,6 +352,11 @@ class MainWindow(QMainWindow):
         title = QLabel("PDF Files")
         title.setStyleSheet("font-size:15px;font-weight:600;")
         header_row.addWidget(title)
+
+        self.library_count_label = QLabel("0 files")
+        self.library_count_label.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;margin-left:4px;")
+        header_row.addWidget(self.library_count_label)
+
         header_row.addStretch()
         add_btn = QPushButton("Add")
         add_btn.clicked.connect(self._open_files)
@@ -257,6 +370,7 @@ class MainWindow(QMainWindow):
         self.file_list = FileListWidget()
         self.file_list.file_selected.connect(self._on_file_selected)
         self.file_list.files_reordered.connect(self._on_files_reordered)
+        self.file_list.open_requested.connect(self._open_files)
         lv.addWidget(self.file_list, 1)
 
         splitter.addWidget(left)
@@ -267,12 +381,12 @@ class MainWindow(QMainWindow):
         rv.setContentsMargins(16, 14, 16, 16)
         rv.setSpacing(10)
 
-        rv.addWidget(self._section_label("Preview"))
+        rv.addWidget(self._section_label("Document Preview"))
 
         self.preview_stack = QStackedWidget()
         self.preview_empty = self._build_empty_state(
-            "No PDF selected",
-            "Drag & drop a PDF here, or use ‘Open PDFs’ on the left."
+            "No PDF Selected",
+            "Select a document from the library on the left, or drag & drop a PDF file here to preview."
         )
         self.preview = PreviewWidget()
         self.preview_stack.addWidget(self.preview_empty)  # 0
@@ -315,14 +429,24 @@ class MainWindow(QMainWindow):
         sep.setStyleSheet(f"background:{BORDER};max-height:1px;border:none;")
         lv.addWidget(sep)
 
-        # No-file banner
-        self.no_file_banner = QLabel("No PDF loaded. Open a PDF from the Home view to use this tool.")
+        # No-file banner with quick open button
+        self.no_file_banner = QFrame()
         self.no_file_banner.setStyleSheet(
-            f"color:{WARN};background:rgba(229,162,61,0.1);"
-            "border-top:1px solid rgba(229,162,61,0.3);"
-            "border-bottom:1px solid rgba(229,162,61,0.3);"
-            "padding:10px 18px;"
+            f"background:rgba(210,153,34,0.12);"
+            f"border-top:1px solid rgba(210,153,34,0.3);"
+            f"border-bottom:1px solid rgba(210,153,34,0.3);"
+            f"padding:8px 14px;"
         )
+        nfb_layout = QHBoxLayout(self.no_file_banner)
+        nfb_layout.setContentsMargins(10, 6, 10, 6)
+        nfb_label = QLabel("⚠️  No PDF loaded. Open a PDF to configure and run this tool.")
+        nfb_label.setStyleSheet(f"color:{WARN};font-size:12px;font-weight:500;")
+        nfb_btn = QPushButton("Open PDF…")
+        nfb_btn.setObjectName("Primary")
+        nfb_btn.setFixedHeight(28)
+        nfb_btn.clicked.connect(self._open_files)
+        nfb_layout.addWidget(nfb_label, 1)
+        nfb_layout.addWidget(nfb_btn)
         self.no_file_banner.setVisible(False)
         lv.addWidget(self.no_file_banner)
 
@@ -348,7 +472,7 @@ class MainWindow(QMainWindow):
 
         self.tool_preview_stack = QStackedWidget()
         self.tool_preview_empty = self._build_empty_state(
-            "No PDF selected",
+            "No PDF Selected",
             "Load a PDF from the Home view to preview it here."
         )
         self.tool_preview = PreviewWidget()
@@ -365,7 +489,7 @@ class MainWindow(QMainWindow):
     def _make_card(self) -> QFrame:
         f = QFrame()
         f.setStyleSheet(
-            f"QFrame{{background:{BG_1};border:1px solid {BORDER};border-radius:8px;}}"
+            f"QFrame{{background:{BG_1};border:1px solid {BORDER};border-radius:10px;}}"
         )
         return f
 
@@ -378,17 +502,22 @@ class MainWindow(QMainWindow):
         w = QWidget()
         v = QVBoxLayout(w)
         v.setAlignment(Qt.AlignCenter)
-        v.setSpacing(8)
-        icon = QLabel("□")
+        v.setSpacing(10)
+        v.setContentsMargins(20, 20, 20, 20)
+
+        icon = QLabel("📄")
         icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet(f"font-size:48px;color:{BORDER_STRONG};")
+        icon.setStyleSheet(f"font-size:44px;color:{BORDER_STRONG};")
+
         t = QLabel(title)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_MUTED};")
+        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT};")
+
         s = QLabel(subtitle)
         s.setAlignment(Qt.AlignCenter)
-        s.setStyleSheet(f"font-size:12px;color:{TEXT_FAINT};")
+        s.setStyleSheet(f"font-size:12px;color:{TEXT_MUTED};")
         s.setWordWrap(True)
+
         v.addStretch()
         v.addWidget(icon)
         v.addWidget(t)
@@ -396,13 +525,30 @@ class MainWindow(QMainWindow):
         v.addStretch()
         return w
 
+    def _deselect_current_file(self):
+        self.current_file = None
+        self.preview.load_pdf(None)
+        self.tool_preview.load_pdf(None)
+        self.tool_panels.set_file(None)
+        self._refresh_preview_empty_state()
+        self._refresh_tool_preview_empty_state()
+        self._update_header()
+        current_key = self._current_nav_key()
+        if current_key:
+            self._update_tool_banner(current_key)
+
     def _update_header(self):
         has_file = self.current_file is not None
         self.save_btn.setEnabled(has_file)
+        self.active_file_pill.setVisible(has_file)
+
         if has_file:
             self.header_sub.setText(
                 f"{self.current_file.name} — {self.current_file.page_count} pages, "
-                f"{self.current_file.size_mb:.1f} MB"
+                f"{self.current_file.size_mb:.2f} MB"
+            )
+            self.pill_text.setText(
+                f"{self.current_file.name} ({self.current_file.page_count}p, {self.current_file.size_mb:.1f}MB)"
             )
         else:
             key = self._current_nav_key() or "home"
@@ -414,7 +560,6 @@ class MainWindow(QMainWindow):
             return
         key = self._nav_row_to_key[row]
         if key == "__section__":
-            # Skip to next non-section row
             next_row = row + 1
             if next_row < self.sidebar.count():
                 self.sidebar.setCurrentRow(next_row)
@@ -462,6 +607,11 @@ class MainWindow(QMainWindow):
         open_a.setShortcut("Ctrl+O")
         open_a.triggered.connect(self._open_files)
         file_menu.addAction(open_a)
+
+        self.recent_menu = file_menu.addMenu("Recent &Files")
+        self._refresh_recent_menu()
+
+        file_menu.addSeparator()
         save_a = QAction("&Save As…", self)
         save_a.setShortcut("Ctrl+S")
         save_a.triggered.connect(self._save_current)
@@ -520,6 +670,49 @@ class MainWindow(QMainWindow):
         about.triggered.connect(self._show_about)
         help_menu.addAction(about)
 
+    def _refresh_recent_menu(self):
+        if not hasattr(self, "recent_menu"):
+            return
+        self.recent_menu.clear()
+        settings = QSettings("PDFToolkit", "PDFToolkit")
+        recent = settings.value("recent_files", []) or []
+        if isinstance(recent, str):
+            recent = [recent]
+
+        existing_recent = [p for p in recent if Path(p).exists()]
+        if not existing_recent:
+            no_act = self.recent_menu.addAction("No recent files")
+            no_act.setEnabled(False)
+            return
+
+        for p_str in existing_recent[:10]:
+            p = Path(p_str)
+            act = self.recent_menu.addAction(f"📄  {p.name}")
+            act.setToolTip(p_str)
+            act.triggered.connect(lambda _, path=p: self._load_files([path]))
+
+        self.recent_menu.addSeparator()
+        clear_act = self.recent_menu.addAction("Clear Recent Files")
+        clear_act.triggered.connect(self._clear_recent_files)
+
+    def _clear_recent_files(self):
+        settings = QSettings("PDFToolkit", "PDFToolkit")
+        settings.setValue("recent_files", [])
+        self._refresh_recent_menu()
+
+    def _update_recent_files(self, paths: list[Path]):
+        settings = QSettings("PDFToolkit", "PDFToolkit")
+        recent = settings.value("recent_files", []) or []
+        if isinstance(recent, str):
+            recent = [recent]
+        for p in paths:
+            sp = str(p.resolve())
+            if sp in recent:
+                recent.remove(sp)
+            recent.insert(0, sp)
+        settings.setValue("recent_files", recent[:15])
+        self._refresh_recent_menu()
+
     def _nav_to(self, key: str):
         for row, k in enumerate(self._nav_row_to_key):
             if k == key:
@@ -530,6 +723,11 @@ class MainWindow(QMainWindow):
         self.status = QStatusBar()
         self.setStatusBar(self.status)
         self.status.showMessage("Ready")
+
+        self.status_file_count = QLabel("0 files loaded")
+        self.status_file_count.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;padding:0 8px;")
+        self.status.addPermanentWidget(self.status_file_count)
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setFixedWidth(180)
         self.progress_bar.setTextVisible(False)
@@ -572,9 +770,10 @@ class MainWindow(QMainWindow):
                 added += 1
 
         self._sync_files()
+        if paths:
+            self._update_recent_files(paths)
         self._nav_to("home")
 
-        # Auto-select the first file if nothing is selected yet.
         if self.current_file is None and self.files:
             self.file_list.list.setCurrentRow(0)
 
@@ -609,7 +808,7 @@ class MainWindow(QMainWindow):
         return None
 
     def _clear_files(self):
-        self.file_list.clear()          # emits files_reordered([]) -> _sync_files
+        self.file_list.clear()
         self.current_file = None
         self.tool_panels.set_file(None)
         self.preview.load_pdf(None)
@@ -621,6 +820,11 @@ class MainWindow(QMainWindow):
     def _sync_files(self):
         self.files = self.file_list.files
         self.batch_view.set_files(self.files)
+        count = len(self.files)
+        if hasattr(self, "library_count_label"):
+            self.library_count_label.setText(f"{count} file{'s' if count != 1 else ''}")
+        if hasattr(self, "status_file_count"):
+            self.status_file_count.setText(f"{count} file{'s' if count != 1 else ''} loaded")
 
     def _on_file_selected(self, pdf: PdfFile):
         self.current_file = pdf
@@ -629,19 +833,23 @@ class MainWindow(QMainWindow):
         self.tool_panels.set_file(pdf)
         self._refresh_preview_empty_state()
         self._refresh_tool_preview_empty_state()
-        # Hide no-file banner if we're on a tool
         current_key = self._current_nav_key()
         if current_key:
             self._update_tool_banner(current_key)
         self._update_header()
         self.status.showMessage(
-            f"Loaded {pdf.name} — {pdf.page_count} pages, {pdf.size_mb:.1f} MB", 4000
+            f"Loaded {pdf.name} — {pdf.page_count} pages, {pdf.size_mb:.2f} MB", 4000
         )
 
     def _on_files_reordered(self, files: list[PdfFile]):
         self.files = list(files)
         self.batch_view.set_files(self.files)
-        # The selected file may have been removed from the library.
+        count = len(self.files)
+        if hasattr(self, "library_count_label"):
+            self.library_count_label.setText(f"{count} file{'s' if count != 1 else ''}")
+        if hasattr(self, "status_file_count"):
+            self.status_file_count.setText(f"{count} file{'s' if count != 1 else ''} loaded")
+
         if self.current_file is not None and not any(
             f.path.resolve() == self.current_file.path.resolve() for f in self.files
         ):
@@ -706,8 +914,6 @@ class MainWindow(QMainWindow):
         self.status.showMessage(f"Running {op_name.replace('_', ' ')}…")
 
     def _worker_finished(self, payload, op_name: str, failed: bool = False):
-        # Always clear the busy state here (not inside the handlers), so a
-        # handler that raises or is replaced still leaves the UI usable.
         self._set_busy(False)
         if failed:
             self._operation_error(payload)
@@ -721,7 +927,7 @@ class MainWindow(QMainWindow):
         self._busy = busy
         self.progress_bar.setVisible(busy)
         if busy:
-            self.progress_bar.setRange(0, 0)  # busy indicator
+            self.progress_bar.setRange(0, 0)
         else:
             self.progress_bar.setRange(0, 100)
 
