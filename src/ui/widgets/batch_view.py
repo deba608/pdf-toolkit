@@ -14,7 +14,9 @@ from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
 from src.ui.icons import get_icon
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, DANGER, SUCCESS, TEXT, TEXT_FAINT, TEXT_MUTED
+    ACCENT, BG_1, BG_2, BORDER, CANVAS, CANVAS_SOFT, DANGER, HAIRLINE,
+    HAIRLINE_COOL, INK, INK_FAINT, INK_MUTE, ON_PRIMARY, PRIMARY,
+    RADIUS_LG, SUCCESS, TEXT, TEXT_FAINT, TEXT_MUTED
 )
 
 # (key, label, description)
@@ -135,10 +137,10 @@ class BatchView(QWidget):
 
         head = QHBoxLayout()
         title = QLabel("Execution Queue")
-        title.setStyleSheet("font-size:15px;font-weight:600;")
+        title.setStyleSheet(f"font-size:15px;font-weight:500;color:{INK};")
         head.addWidget(title)
         self.count_label = QLabel("0 files")
-        self.count_label.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;margin-left:4px;")
+        self.count_label.setStyleSheet(f"color:{INK_MUTE};font-size:12px;margin-left:4px;")
         head.addWidget(self.count_label)
         head.addStretch()
         reset_btn = QPushButton("Reset status")
@@ -154,10 +156,10 @@ class BatchView(QWidget):
         self.tree.setAlternatingRowColors(False)
         self.tree.setFrameShape(QFrame.NoFrame)
         self.tree.setStyleSheet(
-            f"QTreeWidget{{background:{BG_2};border:1px solid {BORDER};border-radius:6px;}}"
+            f"QTreeWidget{{background:{CANVAS};border:1px solid {HAIRLINE};border-radius:6px;}}"
             "QTreeWidget::item{padding:6px 6px;}"
-            f"QHeaderView::section{{background:{BG_1};color:{TEXT_MUTED};"
-            f"padding:7px 10px;border:none;border-bottom:1px solid {BORDER};font-weight:600;}}"
+            f"QHeaderView::section{{background:{CANVAS_SOFT};color:{INK_MUTE};"
+            f"padding:7px 10px;border:none;border-bottom:1px solid {HAIRLINE};font-weight:500;}}"
         )
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -175,7 +177,7 @@ class BatchView(QWidget):
 
         self.run_btn = QPushButton("  Run batch")
         self.run_btn.setObjectName("Primary")
-        self.run_btn.setIcon(get_icon("batch", "#ffffff", 14))
+        self.run_btn.setIcon(get_icon("batch", ON_PRIMARY, 14))
         self.run_btn.setMinimumHeight(38)
         self.run_btn.clicked.connect(self._run)
         action_row.addWidget(self.run_btn)
@@ -189,13 +191,13 @@ class BatchView(QWidget):
     def _card(self) -> QFrame:
         f = QFrame()
         f.setStyleSheet(
-            f"QFrame{{background:{BG_1};border:1px solid {BORDER};border-radius:8px;}}"
+            f"QFrame{{background:{CANVAS};border:1px solid {HAIRLINE};border-radius:{RADIUS_LG}px;}}"
         )
         return f
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{TEXT};font-size:12px;font-weight:600;")
+        lbl.setStyleSheet(f"color:{INK};font-size:12px;font-weight:500;")
         return lbl
 
     def _build_param_panels(self):
@@ -319,7 +321,7 @@ class BatchView(QWidget):
                 str(pdf.page_count),
                 self.STATUS_PENDING,
             ])
-            item.setIcon(0, get_icon("pdf", DANGER, 16))
+            item.setIcon(0, get_icon("pdf", PRIMARY, 16))
             item.setToolTip(0, str(pdf.path))
             item.setForeground(2, QBrush(QColor(TEXT_MUTED)))
             self.tree.addTopLevelItem(item)

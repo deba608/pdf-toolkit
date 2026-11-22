@@ -20,13 +20,17 @@ if ($Mode -eq "release") {
     if (Test-Path "dist") { Remove-Item "dist" -Recurse -Force }
 } else {
     Write-Host "[1/3] Fast incremental build (frozen spec)..." -ForegroundColor Yellow
-    # Windows locks DLLs from recent runs. Rename old dir (works even when locked).
+    # Clean old build artifacts so the fresh onedir build's output is not pre-emptively moved.
+    # Windows locks DLLs/exes from recent runs, so we clean best-effort before building.
     if (Test-Path "dist\PDF Toolkit") {
-        Write-Host "[CLEAN] Moving dist\PDF Toolkit to dist\PDF Toolkit.old..." -ForegroundColor Cyan
-        Move-Item -Path "dist\PDF Toolkit" -Destination "dist\PDF Toolkit.old" -Force -ErrorAction SilentlyContinue
+        Remove-Item "dist\PDF Toolkit" -Recurse -Force -ErrorAction SilentlyContinue
     }
-    # Clean up old dirs from previous runs (best effort)
+    if (Test-Path "dist\PDF Toolkit.exe") {
+        Remove-Item "dist\PDF Toolkit.exe" -Force -ErrorAction SilentlyContinue
+    }
+    # Best-effort cleanup of stale .old stand-ins from prior runs
     Get-ChildItem "dist\PDF Toolkit.old*" -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem "dist\PDF Toolkit.old*" -File | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 $started = Get-Date
