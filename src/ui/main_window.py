@@ -17,8 +17,9 @@ from PySide6.QtWidgets import (
 from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
 from src.paths import resource_path
+from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
+    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
 )
 from src.ui.widgets.batch_view import BatchView
 from src.ui.widgets.file_list import FileListWidget
@@ -47,24 +48,24 @@ class PdfWorker(QRunnable):
             self.signals.error.emit(str(e))
 
 
-# Sidebar nav items: (key, label, icon-text, section, description)
+# Sidebar nav items: (key, label, icon_name, section, description)
 NAV_ITEMS = [
-    ("home",          "Home",           "⌂",  "Library",    "Manage & preview loaded PDFs"),
+    ("home",          "Home",           "home",          "Library",    "Manage & preview loaded PDFs"),
     # Tools
-    ("merge",         "Merge",          "⧉",  "Tools",      "Combine multiple PDFs into one"),
-    ("split",         "Split",          "✂",  "Tools",      "Split a PDF into smaller files"),
-    ("rotate",        "Rotate",         "↻",  "Tools",      "Rotate pages 90°, 180°, or 270°"),
-    ("reorder",       "Reorder",        "⇅",  "Tools",      "Rearrange or drop specific pages"),
-    ("watermark",     "Watermark",      "❖",  "Tools",      "Stamp a text watermark on pages"),
-    ("compress",      "Compress",       "⤓",  "Tools",      "Reduce file size with lossless optimization"),
+    ("merge",         "Merge",          "merge",         "Tools",      "Combine multiple PDFs into one"),
+    ("split",         "Split",          "split",         "Tools",      "Split a PDF into smaller files"),
+    ("rotate",        "Rotate",         "rotate",        "Tools",      "Rotate pages 90°, 180°, or 270°"),
+    ("reorder",       "Reorder",        "reorder",       "Tools",      "Rearrange or drop specific pages"),
+    ("watermark",     "Watermark",      "watermark",     "Tools",      "Stamp a text watermark on pages"),
+    ("compress",      "Compress",       "compress",      "Tools",      "Reduce file size with lossless optimization"),
     # Security
-    ("encrypt",       "Encrypt",        "🔒", "Security",   "Password-protect with AES-256"),
-    ("decrypt",       "Decrypt",        "🔓", "Security",   "Remove password protection"),
+    ("encrypt",       "Encrypt",        "encrypt",       "Security",   "Password-protect with AES-256"),
+    ("decrypt",       "Decrypt",        "decrypt",       "Security",   "Remove password protection"),
     # Convert
-    ("to images",     "PDF → Images",   "⇥",  "Convert",    "Export PDF pages to PNG/JPG"),
-    ("images to pdf", "Images → PDF",   "⇤",  "Convert",    "Create a PDF from images"),
+    ("to images",     "PDF → Images",   "to_images",     "Convert",    "Export PDF pages to PNG/JPG"),
+    ("images to pdf", "Images → PDF",   "images_to_pdf", "Convert",    "Create a PDF from images"),
     # Batch
-    ("batch",         "Batch run",      "⚡",  "Automation", "Apply an operation to all loaded PDFs"),
+    ("batch",         "Batch run",      "batch",         "Automation", "Apply an operation to all loaded PDFs"),
 ]
 
 
@@ -99,21 +100,18 @@ class MainWindow(QMainWindow):
         screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
         avail = screen.availableGeometry() if screen else QRect(0, 0, 1280, 800)
 
-        # Responsive default sizing adapted to current screen working area
         target_w = min(1200, max(860, int(avail.width() * 0.85)))
         target_h = min(760, max(560, int(avail.height() * 0.88)))
 
         self.setMinimumSize(min(760, avail.width() - 40), min(500, avail.height() - 40))
         self.resize(target_w, target_h)
 
-        # Restore previous position if valid on an existing connected screen
         settings = QSettings("PDFToolkit", "PDFToolkit")
         saved_geom = settings.value("geometry")
         restored = False
         if saved_geom:
             self.restoreGeometry(saved_geom)
             w_rect = self.frameGeometry()
-            # Find screen containing the majority of the window
             target_screen = None
             max_inter_area = 0
             for s in QGuiApplication.screens():
@@ -125,7 +123,6 @@ class MainWindow(QMainWindow):
                     target_screen = s
 
             w_area = max(1, w_rect.width() * w_rect.height())
-            # Require at least 90% of the window to be cleanly inside the screen
             if target_screen and (max_inter_area / w_area) >= 0.90:
                 avail = target_screen.availableGeometry()
                 restored = True
@@ -138,7 +135,6 @@ class MainWindow(QMainWindow):
             geo.moveCenter(avail.center())
             self.move(geo.topLeft())
 
-        # Clamp position: guarantee title bar and all edges are strictly within screen
         cur_x = self.x()
         cur_y = self.y()
         clamped_x = max(avail.left(), min(cur_x, avail.right() - self.width()))
@@ -186,8 +182,8 @@ class MainWindow(QMainWindow):
 
         brand_row = QHBoxLayout()
         brand_row.setSpacing(8)
-        brand_icon = QLabel("📄")
-        brand_icon.setStyleSheet("font-size:20px;")
+        brand_icon = QLabel()
+        brand_icon.setPixmap(get_pixmap("pdf", DANGER, 22))
         brand_title = QLabel("PDF Toolkit")
         brand_title.setObjectName("SidebarTitle")
         brand_title.setStyleSheet("font-size:16px;font-weight:700;padding:0;")
@@ -214,12 +210,12 @@ class MainWindow(QMainWindow):
         self.sidebar.setObjectName("Sidebar")
         self.sidebar.setFrameShape(QFrame.NoFrame)
         self.sidebar.setSpacing(1)
-        self.sidebar.setIconSize(QSize(16, 16))
+        self.sidebar.setIconSize(QSize(18, 18))
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
 
         current_section = None
         self._nav_row_to_key: list[str] = []
-        for key, label, glyph, section, desc in NAV_ITEMS:
+        for key, label, icon_name, section, desc in NAV_ITEMS:
             if section != current_section:
                 header_item = QListWidgetItem(section)
                 header_item.setFlags(Qt.NoItemFlags)
@@ -235,7 +231,8 @@ class MainWindow(QMainWindow):
                 self._nav_row_to_key.append("__section__")
                 current_section = section
 
-            item = QListWidgetItem(f" {glyph}   {label}")
+            item = QListWidgetItem(f"   {label}")
+            item.setIcon(get_icon(icon_name, TEXT_MUTED, 18))
             item.setData(Qt.UserRole, key)
             item.setToolTip(desc)
             item.setSizeHint(QSize(0, 36))
@@ -248,8 +245,9 @@ class MainWindow(QMainWindow):
         footer = QWidget()
         fv = QVBoxLayout(footer)
         fv.setContentsMargins(12, 10, 12, 14)
-        open_btn = QPushButton("  +  Open PDFs")
+        open_btn = QPushButton("  Open PDFs…")
         open_btn.setObjectName("Primary")
+        open_btn.setIcon(get_icon("add", "#ffffff", 14))
         open_btn.setMinimumHeight(38)
         open_btn.clicked.connect(self._open_files)
         fv.addWidget(open_btn)
@@ -290,7 +288,8 @@ class MainWindow(QMainWindow):
         pill_layout.setContentsMargins(6, 4, 6, 4)
         pill_layout.setSpacing(8)
 
-        self.pill_icon = QLabel("📄")
+        self.pill_icon = QLabel()
+        self.pill_icon.setPixmap(get_pixmap("pdf", DANGER, 16))
         self.pill_text = QLabel("No active file")
         self.pill_text.setStyleSheet(f"color:{TEXT};font-size:12px;font-weight:500;")
         pill_layout.addWidget(self.pill_icon)
@@ -305,7 +304,8 @@ class MainWindow(QMainWindow):
         self.active_file_pill.setVisible(False)
         layout.addWidget(self.active_file_pill)
 
-        self.save_btn = QPushButton("Save As…")
+        self.save_btn = QPushButton("Save Copy…")
+        self.save_btn.setIcon(get_icon("to_images", TEXT_MUTED, 14))
         self.save_btn.clicked.connect(self._save_current)
         self.save_btn.setEnabled(False)
         layout.addWidget(self.save_btn)
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         lv.setSpacing(10)
 
         header_row = QHBoxLayout()
-        title = QLabel("PDF Files")
+        title = QLabel("PDF Library")
         title.setStyleSheet("font-size:15px;font-weight:600;")
         header_row.addWidget(title)
 
@@ -359,9 +359,11 @@ class MainWindow(QMainWindow):
 
         header_row.addStretch()
         add_btn = QPushButton("Add")
+        add_btn.setIcon(get_icon("add", TEXT_MUTED, 12))
         add_btn.clicked.connect(self._open_files)
         clear_btn = QPushButton("Clear")
         clear_btn.setObjectName("Ghost")
+        clear_btn.setIcon(get_icon("trash", TEXT_MUTED, 12))
         clear_btn.clicked.connect(self._clear_files)
         header_row.addWidget(add_btn)
         header_row.addWidget(clear_btn)
@@ -443,6 +445,7 @@ class MainWindow(QMainWindow):
         nfb_label.setStyleSheet(f"color:{WARN};font-size:12px;font-weight:500;")
         nfb_btn = QPushButton("Open PDF…")
         nfb_btn.setObjectName("Primary")
+        nfb_btn.setIcon(get_icon("add", "#ffffff", 12))
         nfb_btn.setFixedHeight(28)
         nfb_btn.clicked.connect(self._open_files)
         nfb_layout.addWidget(nfb_label, 1)
@@ -505,21 +508,22 @@ class MainWindow(QMainWindow):
         v.setSpacing(10)
         v.setContentsMargins(20, 20, 20, 20)
 
-        icon = QLabel("📄")
-        icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet(f"font-size:44px;color:{BORDER_STRONG};")
+        icon_label = QLabel()
+        icon_label.setPixmap(get_pixmap("pdf", TEXT_FAINT, 44))
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet("background:transparent;border:none;")
 
         t = QLabel(title)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT};")
+        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT};background:transparent;border:none;")
 
         s = QLabel(subtitle)
         s.setAlignment(Qt.AlignCenter)
-        s.setStyleSheet(f"font-size:12px;color:{TEXT_MUTED};")
+        s.setStyleSheet(f"font-size:12px;color:{TEXT_MUTED};background:transparent;border:none;")
         s.setWordWrap(True)
 
         v.addStretch()
-        v.addWidget(icon)
+        v.addWidget(icon_label)
         v.addWidget(t)
         v.addWidget(s)
         v.addStretch()
@@ -584,7 +588,7 @@ class MainWindow(QMainWindow):
             self._refresh_tool_preview_empty_state()
 
     def _lookup_nav(self, key: str) -> tuple[str, str]:
-        for k, label, _g, _s, desc in NAV_ITEMS:
+        for k, label, _icon, _s, desc in NAV_ITEMS:
             if k == key:
                 return label, desc
         return key.title(), ""
@@ -604,6 +608,7 @@ class MainWindow(QMainWindow):
         mb = self.menuBar()
         file_menu = mb.addMenu("&File")
         open_a = QAction("&Open PDF(s)…", self)
+        open_a.setIcon(get_icon("add", TEXT_MUTED, 14))
         open_a.setShortcut("Ctrl+O")
         open_a.triggered.connect(self._open_files)
         file_menu.addAction(open_a)
@@ -613,6 +618,7 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
         save_a = QAction("&Save As…", self)
+        save_a.setIcon(get_icon("to_images", TEXT_MUTED, 14))
         save_a.setShortcut("Ctrl+S")
         save_a.triggered.connect(self._save_current)
         file_menu.addAction(save_a)
@@ -622,6 +628,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(save_as_a)
         file_menu.addSeparator()
         remove_a = QAction("&Remove Selected", self)
+        remove_a.setIcon(get_icon("trash", DANGER, 14))
         remove_a.setShortcut("Del")
         remove_a.triggered.connect(lambda: self.file_list.remove_current())
         file_menu.addAction(remove_a)
@@ -635,28 +642,33 @@ class MainWindow(QMainWindow):
         file_menu.addAction(exit_a)
 
         tools_menu = mb.addMenu("&Tools")
-        for key, label, *_rest in NAV_ITEMS:
+        for key, label, icon_name, *_rest in NAV_ITEMS:
             if key in {"home", "batch"}:
                 continue
             a = QAction(label, self)
+            a.setIcon(get_icon(icon_name, TEXT_MUTED, 14))
             a.triggered.connect(lambda _, k=key: self._nav_to(k))
             tools_menu.addAction(a)
         tools_menu.addSeparator()
         batch_a = QAction("Batch run…", self)
+        batch_a.setIcon(get_icon("batch", TEXT_MUTED, 14))
         batch_a.setShortcut("Ctrl+B")
         batch_a.triggered.connect(lambda: self._nav_to("batch"))
         tools_menu.addAction(batch_a)
 
         view_menu = mb.addMenu("&View")
         zoom_in = QAction("Zoom &In", self)
+        zoom_in.setIcon(get_icon("zoom_in", TEXT_MUTED, 14))
         zoom_in.setShortcuts(["Ctrl++", "Ctrl+="])
         zoom_in.triggered.connect(lambda: self._preview_action("zoom_in"))
         view_menu.addAction(zoom_in)
         zoom_out = QAction("Zoom &Out", self)
+        zoom_out.setIcon(get_icon("zoom_out", TEXT_MUTED, 14))
         zoom_out.setShortcut("Ctrl+-")
         zoom_out.triggered.connect(lambda: self._preview_action("zoom_out"))
         view_menu.addAction(zoom_out)
         zoom_reset = QAction("&Reset Zoom", self)
+        zoom_reset.setIcon(get_icon("fit_width", TEXT_MUTED, 14))
         zoom_reset.setShortcut("Ctrl+0")
         zoom_reset.triggered.connect(lambda: self._preview_action("reset_zoom"))
         view_menu.addAction(zoom_reset)
@@ -687,7 +699,7 @@ class MainWindow(QMainWindow):
 
         for p_str in existing_recent[:10]:
             p = Path(p_str)
-            act = self.recent_menu.addAction(f"📄  {p.name}")
+            act = self.recent_menu.addAction(get_icon("pdf", DANGER, 14), p.name)
             act.setToolTip(p_str)
             act.triggered.connect(lambda _, path=p: self._load_files([path]))
 
