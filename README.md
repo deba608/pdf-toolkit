@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<img src="assets/logo.svg" alt="PDF Toolkit logo" width="140" />
+<img src="assets/logo.png" alt="PDF Toolkit logo" width="140" />
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/PySide6-6.7%2B-41CD52?style=for-the-badge&logo=qt&logoColor=white)
