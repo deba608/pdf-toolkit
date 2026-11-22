@@ -310,6 +310,14 @@ class MainWindow(QMainWindow):
         self.save_btn.setEnabled(False)
         layout.addWidget(self.save_btn)
 
+        self.help_btn = QPushButton("?")
+        self.help_btn.setObjectName("Ghost")
+        self.help_btn.setFixedSize(30, 30)
+        self.help_btn.setToolTip("Keyboard Shortcuts & Help (F1)")
+        self.help_btn.setStyleSheet("font-weight:700;font-size:13px;")
+        self.help_btn.clicked.connect(self._show_shortcuts)
+        layout.addWidget(self.help_btn)
+
         return h
 
     def _build_content(self) -> QWidget:
@@ -606,12 +614,14 @@ class MainWindow(QMainWindow):
     # ---------- Menu & status ----------
     def _setup_menu(self):
         mb = self.menuBar()
+        mb.setVisible(False)  # Hidden to eliminate redundant top bar; shortcuts bound to window
         file_menu = mb.addMenu("&File")
         open_a = QAction("&Open PDF(s)…", self)
         open_a.setIcon(get_icon("add", TEXT_MUTED, 14))
         open_a.setShortcut("Ctrl+O")
         open_a.triggered.connect(self._open_files)
         file_menu.addAction(open_a)
+        self.addAction(open_a)
 
         self.recent_menu = file_menu.addMenu("Recent &Files")
         self._refresh_recent_menu()
@@ -622,16 +632,19 @@ class MainWindow(QMainWindow):
         save_a.setShortcut("Ctrl+S")
         save_a.triggered.connect(self._save_current)
         file_menu.addAction(save_a)
+        self.addAction(save_a)
         save_as_a = QAction("Save &Copy As…", self)
         save_as_a.setShortcut("Ctrl+Shift+S")
         save_as_a.triggered.connect(self._save_current)
         file_menu.addAction(save_as_a)
+        self.addAction(save_as_a)
         file_menu.addSeparator()
         remove_a = QAction("&Remove Selected", self)
         remove_a.setIcon(get_icon("trash", DANGER, 14))
         remove_a.setShortcut("Del")
         remove_a.triggered.connect(lambda: self.file_list.remove_current())
         file_menu.addAction(remove_a)
+        self.addAction(remove_a)
         clear_a = QAction("&Clear Library", self)
         clear_a.triggered.connect(self._clear_files)
         file_menu.addAction(clear_a)
@@ -640,6 +653,7 @@ class MainWindow(QMainWindow):
         exit_a.setShortcut("Ctrl+Q")
         exit_a.triggered.connect(self.close)
         file_menu.addAction(exit_a)
+        self.addAction(exit_a)
 
         tools_menu = mb.addMenu("&Tools")
         for key, label, icon_name, *_rest in NAV_ITEMS:
@@ -655,6 +669,7 @@ class MainWindow(QMainWindow):
         batch_a.setShortcut("Ctrl+B")
         batch_a.triggered.connect(lambda: self._nav_to("batch"))
         tools_menu.addAction(batch_a)
+        self.addAction(batch_a)
 
         view_menu = mb.addMenu("&View")
         zoom_in = QAction("Zoom &In", self)
@@ -662,25 +677,30 @@ class MainWindow(QMainWindow):
         zoom_in.setShortcuts(["Ctrl++", "Ctrl+="])
         zoom_in.triggered.connect(lambda: self._preview_action("zoom_in"))
         view_menu.addAction(zoom_in)
+        self.addAction(zoom_in)
         zoom_out = QAction("Zoom &Out", self)
         zoom_out.setIcon(get_icon("zoom_out", TEXT_MUTED, 14))
         zoom_out.setShortcut("Ctrl+-")
         zoom_out.triggered.connect(lambda: self._preview_action("zoom_out"))
         view_menu.addAction(zoom_out)
+        self.addAction(zoom_out)
         zoom_reset = QAction("&Reset Zoom", self)
         zoom_reset.setIcon(get_icon("fit_width", TEXT_MUTED, 14))
         zoom_reset.setShortcut("Ctrl+0")
         zoom_reset.triggered.connect(lambda: self._preview_action("reset_zoom"))
         view_menu.addAction(zoom_reset)
+        self.addAction(zoom_reset)
 
         help_menu = mb.addMenu("&Help")
         sc = QAction("Keyboard &Shortcuts…", self)
         sc.setShortcut("F1")
         sc.triggered.connect(self._show_shortcuts)
         help_menu.addAction(sc)
+        self.addAction(sc)
         about = QAction("&About", self)
         about.triggered.connect(self._show_about)
         help_menu.addAction(about)
+        self.addAction(about)
 
     def _refresh_recent_menu(self):
         if not hasattr(self, "recent_menu"):
