@@ -10,7 +10,6 @@ import tempfile
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --no-sandbox --disable-software-rasterizer")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pymupdf as fitz
@@ -153,11 +152,11 @@ def main():
         return "AES-256, password verified"
     check("encrypt", t_encrypt)
 
-    # decrypt (reload encrypted file through UI path, then decrypt)
+    # decrypt (reload the encrypted file directly, then decrypt)
     def t_decrypt():
         enc = tmp / "alpha_encrypted.pdf"
-        win2 = MainWindow()
-        win2._load_files([enc])  # no prompt needed: password is optional here -> should fail gracefully
+        # Loading through the UI would open the password prompt, which cannot
+        # be answered in a headless test; use the engine path instead.
         pf = PdfEngine.load(enc, "secret")
         win.current_file = pf
         r = run("decrypt", {"password": "secret"})

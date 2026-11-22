@@ -1,19 +1,24 @@
+import shutil
 from pathlib import Path
+
+from PySide6.QtCore import QObject, QRunnable, QSize, Qt, QThreadPool, Signal
+from PySide6.QtGui import QAction, QDragEnterEvent, QDropEvent, QIcon
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-    QFileDialog, QMessageBox, QProgressBar, QListWidget, QListWidgetItem,
-    QSplitter, QStatusBar, QInputDialog, QLineEdit, QStackedWidget,
-    QFrame, QSizePolicy, QScrollArea
+    QFileDialog, QFrame, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QProgressBar,
+    QPushButton, QScrollArea, QSplitter, QStackedWidget, QStatusBar, QVBoxLayout,
+    QWidget,
 )
-from PySide6.QtGui import QAction, QIcon, QDragEnterEvent, QDropEvent, QPixmap
-from PySide6.QtCore import Qt, QThreadPool, QRunnable, Signal, QObject, QSize
 
 from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
+from src.paths import resource_path
+from src.ui.theme import (BG_1, BORDER, BORDER_STRONG, TEXT_FAINT, TEXT_MUTED,
+                          WARN)
+from src.ui.widgets.batch_view import BatchView
 from src.ui.widgets.file_list import FileListWidget
 from src.ui.widgets.preview import PreviewWidget
 from src.ui.widgets.tool_panels import ToolPanelsStack
-from src.ui.widgets.batch_view import BatchView
 
 
 class WorkerSignals(QObject):
@@ -32,29 +37,28 @@ class PdfWorker(QRunnable):
 
     def run(self):
         try:
-            result = self.fn(*self.args, **self.kwargs)
-            self.signals.finished.emit(result)
-        except Exception as e:
+            self.signals.finished.emit(self.fn(*self.args, **self.kwargs))
+        except Exception as e:  # noqa: BLE001 - surfaced to the user as a dialog
             self.signals.error.emit(str(e))
 
 
 # Sidebar nav items: (key, label, icon-text, section, description)
 # key "home" = file manager; "images to pdf" has no selected file requirement
 NAV_ITEMS = [
-    ("home",          "Home",           "⌂",  "Library",   "Open and manage PDFs"),
+    ("home",          "Home",           "⌂",  "Library",    "Open and manage PDFs"),
     # Tools
-    ("merge",         "Merge",          "☰",  "Tools",     "Combine multiple PDFs"),
-    ("split",         "Split",          "✂",  "Tools",     "Split a PDF into parts"),
-    ("rotate",        "Rotate",         "↻",  "Tools",     "Rotate pages 90/180/270"),
-    ("reorder",       "Reorder",        "⇅",  "Tools",     "Rearrange page order"),
-    ("watermark",     "Watermark",      "❖",  "Tools",     "Add text watermark"),
-    ("compress",      "Compress",       "↓",  "Tools",     "Reduce file size"),
+    ("merge",         "Merge",          "☰",  "Tools",      "Combine multiple PDFs"),
+    ("split",         "Split",          "✂",  "Tools",      "Split a PDF into parts"),
+    ("rotate",        "Rotate",         "↻",  "Tools",      "Rotate pages 90/180/270"),
+    ("reorder",       "Reorder",        "⇅",  "Tools",      "Rearrange page order"),
+    ("watermark",     "Watermark",      "❖",  "Tools",      "Add text watermark"),
+    ("compress",      "Compress",       "↓",  "Tools",      "Reduce file size"),
     # Security
     ("encrypt",       "Encrypt",        "\U0001F512", "Security", "Password-protect a PDF"),
     ("decrypt",       "Decrypt",        "\U0001F513", "Security", "Remove password"),
     # Convert
-    ("to images",     "PDF → Images", "⇒", "Convert",  "Export pages as PNG/JPG"),
-    ("images to pdf", "Images → PDF", "⇐", "Convert",  "Build PDF from images"),
+    ("to images",     "PDF → Images",   "⇒",  "Convert",    "Export pages as PNG/JPG"),
+    ("images to pdf", "Images → PDF",   "⇐",  "Convert",    "Build PDF from images"),
     # Batch
     ("batch",         "Batch run",      "⧉",  "Automation", "Apply one operation to all loaded PDFs"),
 ]
@@ -68,13 +72,14 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1024, 680)
         self.setAcceptDrops(True)
 
-        icon_path = Path(__file__).parent.parent / "resources" / "icon.ico"
+        icon_path = resource_path("icon.ico")
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
 
         self.thread_pool = QThreadPool.globalInstance()
         self.current_file: PdfFile | None = None
         self.files: list[PdfFile] = []
+        self._busy = False
         # Hold PdfWorker instances alive until their signals have been dispatched.
         # QRunnable auto-deletes after run() returns, which can destroy the
         # WorkerSignals QObject before Qt delivers the queued finished signal
@@ -191,7 +196,8 @@ class MainWindow(QMainWindow):
         layout.addStretch()
 
         self.save_btn = QPushButton("Save As…")
-        self.save_btn.setShortcut("Ctrl+S")
+        # Ctrl+S is owned by the File menu action; a button shortcut here
+        # would register a second, ambiguous shortcut.
         self.save_btn.clicked.connect(self._save_current)
         self.save_btn.setEnabled(False)
         layout.addWidget(self.save_btn)
@@ -214,6 +220,7 @@ class MainWindow(QMainWindow):
         self.batch_view.status_message.connect(
             lambda msg, ms: self.status.showMessage(msg, ms)
         )
+        self.batch_view.files_produced.connect(self._add_outputs)
         v.addWidget(self.batch_view, 1)
         return wrap
 
@@ -235,7 +242,6 @@ class MainWindow(QMainWindow):
 
         header_row = QHBoxLayout()
         title = QLabel("PDF Files")
-        title.setProperty("class", "CardTitle")
         title.setStyleSheet("font-size:15px;font-weight:600;")
         header_row.addWidget(title)
         header_row.addStretch()
@@ -261,9 +267,7 @@ class MainWindow(QMainWindow):
         rv.setContentsMargins(16, 14, 16, 16)
         rv.setSpacing(10)
 
-        pv_title = QLabel("Preview")
-        pv_title.setStyleSheet("font-size:15px;font-weight:600;")
-        rv.addWidget(pv_title)
+        rv.addWidget(self._section_label("Preview"))
 
         self.preview_stack = QStackedWidget()
         self.preview_empty = self._build_empty_state(
@@ -299,20 +303,22 @@ class MainWindow(QMainWindow):
         self.tool_header_title = QLabel("Tool")
         self.tool_header_title.setStyleSheet("font-size:16px;font-weight:600;padding:16px 18px 2px 18px;")
         self.tool_header_desc = QLabel("")
-        self.tool_header_desc.setStyleSheet("color:#9aa1b2;font-size:12px;padding:0 18px 14px 18px;")
+        self.tool_header_desc.setStyleSheet(
+            f"color:{TEXT_MUTED};font-size:12px;padding:0 18px 14px 18px;"
+        )
         self.tool_header_desc.setWordWrap(True)
         lv.addWidget(self.tool_header_title)
         lv.addWidget(self.tool_header_desc)
 
         sep = QFrame()
         sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet("background:#2a2f42;max-height:1px;border:none;")
+        sep.setStyleSheet(f"background:{BORDER};max-height:1px;border:none;")
         lv.addWidget(sep)
 
         # No-file banner
         self.no_file_banner = QLabel("No PDF loaded. Open a PDF from the Home view to use this tool.")
         self.no_file_banner.setStyleSheet(
-            "color:#e5a23d;background:rgba(229,162,61,0.1);"
+            f"color:{WARN};background:rgba(229,162,61,0.1);"
             "border-top:1px solid rgba(229,162,61,0.3);"
             "border-bottom:1px solid rgba(229,162,61,0.3);"
             "padding:10px 18px;"
@@ -322,6 +328,7 @@ class MainWindow(QMainWindow):
 
         self.tool_panels = ToolPanelsStack()
         self.tool_panels.operation_requested.connect(self._run_operation)
+        self.tool_panels.validation_failed.connect(self._show_validation_error)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -357,8 +364,9 @@ class MainWindow(QMainWindow):
     # ---------- Helpers ----------
     def _make_card(self) -> QFrame:
         f = QFrame()
-        f.setProperty("class", "Card")
-        f.setStyleSheet("QFrame{background:#161922;border:1px solid #2a2f42;border-radius:8px;}")
+        f.setStyleSheet(
+            f"QFrame{{background:{BG_1};border:1px solid {BORDER};border-radius:8px;}}"
+        )
         return f
 
     def _section_label(self, text: str) -> QLabel:
@@ -373,13 +381,13 @@ class MainWindow(QMainWindow):
         v.setSpacing(8)
         icon = QLabel("□")
         icon.setAlignment(Qt.AlignCenter)
-        icon.setStyleSheet("font-size:48px;color:#363c52;")
+        icon.setStyleSheet(f"font-size:48px;color:{BORDER_STRONG};")
         t = QLabel(title)
         t.setAlignment(Qt.AlignCenter)
-        t.setStyleSheet("font-size:15px;font-weight:600;color:#9aa1b2;")
+        t.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_MUTED};")
         s = QLabel(subtitle)
         s.setAlignment(Qt.AlignCenter)
-        s.setStyleSheet("font-size:12px;color:#6b7284;")
+        s.setStyleSheet(f"font-size:12px;color:{TEXT_FAINT};")
         s.setWordWrap(True)
         v.addStretch()
         v.addWidget(icon)
@@ -389,10 +397,16 @@ class MainWindow(QMainWindow):
         return w
 
     def _update_header(self):
-        if not self.current_file:
-            self.save_btn.setEnabled(False)
+        has_file = self.current_file is not None
+        self.save_btn.setEnabled(has_file)
+        if has_file:
+            self.header_sub.setText(
+                f"{self.current_file.name} — {self.current_file.page_count} pages, "
+                f"{self.current_file.size_mb:.1f} MB"
+            )
         else:
-            self.save_btn.setEnabled(True)
+            key = self._current_nav_key() or "home"
+            self.header_sub.setText(self._lookup_nav(key)[1])
 
     # ---------- Navigation ----------
     def _on_nav_changed(self, row: int):
@@ -452,6 +466,18 @@ class MainWindow(QMainWindow):
         save_a.setShortcut("Ctrl+S")
         save_a.triggered.connect(self._save_current)
         file_menu.addAction(save_a)
+        save_as_a = QAction("Save &Copy As…", self)
+        save_as_a.setShortcut("Ctrl+Shift+S")
+        save_as_a.triggered.connect(self._save_current)
+        file_menu.addAction(save_as_a)
+        file_menu.addSeparator()
+        remove_a = QAction("&Remove Selected", self)
+        remove_a.setShortcut("Del")
+        remove_a.triggered.connect(lambda: self.file_list.remove_current())
+        file_menu.addAction(remove_a)
+        clear_a = QAction("&Clear Library", self)
+        clear_a.triggered.connect(self._clear_files)
+        file_menu.addAction(clear_a)
         file_menu.addSeparator()
         exit_a = QAction("E&xit", self)
         exit_a.setShortcut("Ctrl+Q")
@@ -470,6 +496,20 @@ class MainWindow(QMainWindow):
         batch_a.setShortcut("Ctrl+B")
         batch_a.triggered.connect(lambda: self._nav_to("batch"))
         tools_menu.addAction(batch_a)
+
+        view_menu = mb.addMenu("&View")
+        zoom_in = QAction("Zoom &In", self)
+        zoom_in.setShortcuts(["Ctrl++", "Ctrl+="])
+        zoom_in.triggered.connect(lambda: self._preview_action("zoom_in"))
+        view_menu.addAction(zoom_in)
+        zoom_out = QAction("Zoom &Out", self)
+        zoom_out.setShortcut("Ctrl+-")
+        zoom_out.triggered.connect(lambda: self._preview_action("zoom_out"))
+        view_menu.addAction(zoom_out)
+        zoom_reset = QAction("&Reset Zoom", self)
+        zoom_reset.setShortcut("Ctrl+0")
+        zoom_reset.triggered.connect(lambda: self._preview_action("reset_zoom"))
+        view_menu.addAction(zoom_reset)
 
         help_menu = mb.addMenu("&Help")
         sc = QAction("Keyboard &Shortcuts…", self)
@@ -496,6 +536,10 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.status.addPermanentWidget(self.progress_bar)
 
+    def _preview_action(self, method: str):
+        for preview in (self.preview, self.tool_preview):
+            getattr(preview, method)()
+
     # ---------- Drag & drop ----------
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -516,19 +560,31 @@ class MainWindow(QMainWindow):
             self._load_files([Path(p) for p in paths])
 
     def _load_files(self, paths: list[Path]):
-        first_added_row = None
+        added = 0
+        skipped = 0
         for path in paths:
+            if self.file_list.has_path(path):
+                skipped += 1
+                continue
             pdf = self._load_with_password(path)
             if pdf:
-                if first_added_row is None:
-                    first_added_row = self.file_list.list.count()
-                self.files.append(pdf)
                 self.file_list.add_file(pdf)
-        self.batch_view.set_files(self.files)
+                added += 1
+
+        self._sync_files()
         self._nav_to("home")
-        # Auto-select the first newly added file if nothing is selected yet.
-        if self.current_file is None and first_added_row is not None:
-            self.file_list.list.setCurrentRow(first_added_row)
+
+        # Auto-select the first file if nothing is selected yet.
+        if self.current_file is None and self.files:
+            self.file_list.list.setCurrentRow(0)
+
+        if added:
+            self.status.showMessage(f"Added {added} PDF{'s' if added != 1 else ''}", 4000)
+        if skipped:
+            self.status.showMessage(
+                f"{skipped} file{'s' if skipped != 1 else ''} already in the library",
+                4000,
+            )
 
     def _load_with_password(self, path: Path):
         password = None
@@ -546,20 +602,25 @@ class MainWindow(QMainWindow):
                 if not ok:
                     self.status.showMessage(f"Cancelled loading {path.name}", 3000)
                     return None
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 QMessageBox.warning(self, "Error", f"Failed to load {path.name}: {e}")
                 return None
         QMessageBox.warning(self, "Error", f"Too many incorrect passwords for {path.name}")
         return None
 
     def _clear_files(self):
-        self.files.clear()
-        self.file_list._clear_all()
+        self.file_list.clear()          # emits files_reordered([]) -> _sync_files
         self.current_file = None
-        self.batch_view.set_files(self.files)
+        self.tool_panels.set_file(None)
+        self.preview.load_pdf(None)
+        self.tool_preview.load_pdf(None)
         self._refresh_preview_empty_state()
         self._refresh_tool_preview_empty_state()
         self._update_header()
+
+    def _sync_files(self):
+        self.files = self.file_list.files
+        self.batch_view.set_files(self.files)
 
     def _on_file_selected(self, pdf: PdfFile):
         self.current_file = pdf
@@ -573,11 +634,22 @@ class MainWindow(QMainWindow):
         if current_key:
             self._update_tool_banner(current_key)
         self._update_header()
-        self.status.showMessage(f"Loaded {pdf.name} — {pdf.page_count} pages, {pdf.size_mb:.1f} MB", 4000)
+        self.status.showMessage(
+            f"Loaded {pdf.name} — {pdf.page_count} pages, {pdf.size_mb:.1f} MB", 4000
+        )
 
     def _on_files_reordered(self, files: list[PdfFile]):
-        self.files = files
+        self.files = list(files)
         self.batch_view.set_files(self.files)
+        # The selected file may have been removed from the library.
+        if self.current_file is not None and self.current_file not in self.files:
+            self.current_file = None
+            self.preview.load_pdf(None)
+            self.tool_preview.load_pdf(None)
+            self.tool_panels.set_file(None)
+            self._refresh_preview_empty_state()
+            self._refresh_tool_preview_empty_state()
+            self._update_header()
 
     def _current_nav_key(self) -> str | None:
         row = self.sidebar.currentRow()
@@ -588,111 +660,153 @@ class MainWindow(QMainWindow):
 
     # ---------- Operations ----------
     def _run_operation(self, op_name: str, params: dict):
-        # Operations that act on the whole library (or need no library at all).
-        multi_or_fileless = {"images_to_pdf", "merge"}
-        if op_name == "merge" and not self.files:
-            QMessageBox.information(self, "No files", "Add at least one PDF to merge.")
+        if self._busy:
+            self.status.showMessage("Please wait for the current operation to finish", 3000)
             return
-        if op_name not in multi_or_fileless and not self.current_file:
-            QMessageBox.information(self, "No file", "Please open a PDF first.")
-            return
-
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)  # busy indicator
 
         if op_name == "merge":
-            worker = PdfWorker(PdfEngine.merge, self.files, **params)
+            if len(self.files) < 2:
+                QMessageBox.information(
+                    self, "Not enough files",
+                    "Add at least two PDFs to merge (the whole Home list is merged)."
+                )
+                return
+            worker = PdfWorker(PdfEngine.merge, list(self.files), **params)
         elif op_name == "split":
+            if not self.current_file:
+                self._no_file()
+                return
             worker = PdfWorker(PdfEngine.split_by_pages, self.current_file, **params)
         elif op_name == "images_to_pdf":
             worker = PdfWorker(PdfEngine.images_to_pdf, **params)
         else:
-            worker = PdfWorker(getattr(PdfEngine, op_name), self.current_file, **params)
+            if not self.current_file:
+                self._no_file()
+                return
+            fn = getattr(PdfEngine, op_name, None)
+            if fn is None:
+                QMessageBox.critical(self, "Unsupported operation", op_name)
+                return
+            worker = PdfWorker(fn, self.current_file, **params)
 
+        self._set_busy(True)
         worker.setAutoDelete(False)
         self._active_workers.add(worker)
 
         def _retire(w=worker):
             self._active_workers.discard(w)
 
-        worker.signals.finished.connect(lambda r: (self._operation_done(r, op_name), _retire()))
+        worker.signals.finished.connect(
+            lambda r: (self._operation_done(r, op_name), _retire())
+        )
         worker.signals.error.connect(lambda m: (self._operation_error(m), _retire()))
         self.thread_pool.start(worker)
-        self.status.showMessage(f"Running {op_name}…")
+        self.status.showMessage(f"Running {op_name.replace('_', ' ')}…")
+
+    def _no_file(self):
+        QMessageBox.information(self, "No file", "Please open a PDF first.")
+
+    def _set_busy(self, busy: bool):
+        self._busy = busy
+        self.progress_bar.setVisible(busy)
+        if busy:
+            self.progress_bar.setRange(0, 0)  # busy indicator
+        else:
+            self.progress_bar.setRange(0, 100)
 
     def _operation_done(self, result, op_name: str):
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setRange(0, 100)
+        self._set_busy(False)
 
         if isinstance(result, list):
             if op_name == "split":
-                for pdf in result:
-                    self.files.append(pdf)
-                    self.file_list.add_file(pdf)
-                self.batch_view.set_files(self.files)
-                self.status.showMessage(f"Split into {len(result)} files", 4000)
+                self._add_outputs(result)
+                self.status.showMessage(f"Split into {len(result)} files", 5000)
             elif op_name == "to_images":
-                self.status.showMessage(f"Exported {len(result)} images", 4000)
-        else:
-            # Single-file ops (compress/rotate/watermark/encrypt/decrypt/reorder/merge)
-            # produce a NEW file. Add it to the library if we don't already track it,
-            # then select it so the preview and next op target the fresh output.
-            existing = next((f for f in self.files if f.path == result.path), None)
-            if existing is None:
-                self.files.append(result)
-                self.file_list.add_file(result)
-                self.batch_view.set_files(self.files)
+                folder = result[0].parent if result else ""
+                self.status.showMessage(
+                    f"Exported {len(result)} image{'s' if len(result) != 1 else ''} to {folder}",
+                    6000,
+                )
             else:
-                self.file_list.update_file(result)
-            self.current_file = result
-            # Select the output in the list (triggers _on_file_selected -> preview updates)
-            for i in range(self.file_list.list.count()):
-                item = self.file_list.list.item(i)
-                if item.data(Qt.UserRole).path == result.path:
-                    self.file_list.list.setCurrentRow(i)
-                    break
+                self._add_outputs([r for r in result if isinstance(r, PdfFile)])
+        elif isinstance(result, PdfFile):
+            self._add_outputs([result])
+            self.file_list.select_path(result.path)
             self.status.showMessage(
-                f"✔  {op_name.replace('_',' ').title()} saved to {result.path.name}", 5000
+                f"✔  {op_name.replace('_', ' ').title()} saved to {result.path.name}", 5000
             )
+        else:
+            self.status.showMessage(f"✔  {op_name.replace('_', ' ').title()} finished", 5000)
 
         self._update_header()
         self._refresh_preview_empty_state()
         self._refresh_tool_preview_empty_state()
 
+    def _add_outputs(self, pdfs: list[PdfFile]):
+        """Add/replace produced files in the library and refresh the queue."""
+        for pdf in pdfs:
+            existing = next(
+                (f for f in self.files if f.path.resolve() == pdf.path.resolve()), None
+            )
+            if existing is None:
+                self.file_list.add_file(pdf)
+            else:
+                self.file_list.update_file(pdf)
+        self._sync_files()
+
     def _operation_error(self, msg: str):
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setRange(0, 100)
+        self._set_busy(False)
         QMessageBox.critical(self, "Operation failed", msg)
         self.status.showMessage(f"Error: {msg[:80]}", 5000)
+
+    def _show_validation_error(self, msg: str):
+        self.status.showMessage(msg, 5000)
+        QMessageBox.warning(self, "Check the values", msg)
 
     def _save_current(self):
         if not self.current_file:
             return
+        suggested = str(self.current_file.path)
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save PDF", self.current_file.name, "PDF Files (*.pdf)"
+            self, "Save PDF Copy", suggested, "PDF Files (*.pdf)"
         )
-        if path:
-            import shutil
-            shutil.copy2(self.current_file.path, path)
-            self.status.showMessage(f"Saved to {path}", 4000)
+        if not path:
+            return
+        target = Path(path)
+        if target.suffix.lower() != ".pdf":
+            target = target.with_suffix(".pdf")
+        try:
+            if target.resolve() != self.current_file.path.resolve():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(self.current_file.path, target)
+                self.status.showMessage(f"Saved copy to {target}", 5000)
+            else:
+                self.status.showMessage("File is already at that location", 4000)
+        except OSError as e:
+            QMessageBox.warning(self, "Could not save", str(e))
 
     # ---------- Help dialogs ----------
     def _show_about(self):
+        from src.__version__ import __version__
         QMessageBox.about(
             self,
             "About PDF Toolkit",
-            "<h3>PDF Toolkit 1.0</h3>"
-            "<p>A fast, private, offline PDF toolkit for Windows.</p>"
+            f"<h3>PDF Toolkit {__version__}</h3>"
+            "<p>A fast, private, offline PDF toolkit.</p>"
             "<p>Built with PySide6 and PyMuPDF.</p>"
         )
 
     def _show_shortcuts(self):
         rows = [
             ("Ctrl+O", "Open PDF files"),
-            ("Ctrl+S", "Save current PDF"),
+            ("Ctrl+S", "Save a copy of the selected PDF"),
+            ("Ctrl+Shift+S", "Save a copy (same dialog)"),
+            ("Ctrl+B", "Open batch processing"),
+            ("Ctrl++ / Ctrl+-", "Zoom preview in/out"),
+            ("Ctrl+0", "Reset preview zoom"),
+            ("Del", "Remove selected file from the library"),
+            ("F1", "Show this dialog"),
             ("Ctrl+Q", "Quit"),
-            ("F1",     "Show this dialog"),
-            ("Del",    "Remove selected file"),
             ("Drag & drop", "Add PDFs to the library"),
         ]
         html = "<table cellpadding='6'>"

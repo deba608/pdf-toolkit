@@ -68,6 +68,8 @@ class PdfEngine:
             raise ValueError(f"File not found: {filepath}")
         doc = fitz.open(str(filepath))
         try:
+            # ``is_encrypted`` turns False once authenticated, so read it now.
+            encrypted = bool(doc.is_encrypted)
             if doc.needs_pass:
                 if not password:
                     raise ValueError("PDF is encrypted, password required")
@@ -90,9 +92,7 @@ class PdfEngine:
                 page_count=doc.page_count,
                 pages=pages,
                 metadata=doc.metadata or {},
-                # ``needs_pass`` stays True after authenticating, so use
-                # ``is_encrypted`` (does the file carry encryption at all).
-                is_encrypted=bool(doc.is_encrypted),
+                is_encrypted=encrypted,
                 password=password,
             )
         finally:
@@ -423,7 +423,7 @@ class PdfEngine:
             target_dpi = 150 if quality >= 60 else 110
             try:
                 doc.rewrite_images(
-                    dpi_threshold=target_dpi,
+                    dpi_threshold=target_dpi + 1,
                     dpi_target=target_dpi,
                     quality=quality,
                     lossy=True,
@@ -438,20 +438,6 @@ class PdfEngine:
             except Exception:
                 pass
             doc.save(str(output_path), garbage=4, deflate=True, clean=True)
-        finally:
-            doc.close()
-        return PdfEngine.load(output_path)
-
-    @staticmethod
-    def linearize(file: PdfFile, output_path: Path = None) -> PdfFile:
-        """Save a linearized ("fast web view") copy of the PDF."""
-        if output_path is None:
-            output_path = file.path.with_name(f"{file.path.stem}_linearized.pdf")
-        output_path = PdfEngine._guard_output(output_path, [file.path])
-
-        doc = PdfEngine._open(file)
-        try:
-            doc.save(str(output_path), linear=True, garbage=4, deflate=True)
         finally:
             doc.close()
         return PdfEngine.load(output_path)

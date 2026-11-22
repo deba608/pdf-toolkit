@@ -11,6 +11,8 @@ from PySide6.QtGui import QColor, QBrush
 
 from src.core.models import PdfFile
 from src.core.pdf_engine import PdfEngine
+from src.ui.theme import (ACCENT, BG_1, BG_2, BORDER, SUCCESS, TEXT_MUTED,
+                          DANGER)
 
 
 # (key, label, description)
@@ -51,6 +53,7 @@ class BatchView(QWidget):
     """Batch processing panel. Call set_files(list[PdfFile]) when the library changes."""
 
     status_message = Signal(str, int)  # (message, timeout_ms)
+    files_produced = Signal(list)      # [PdfFile] outputs created by the last run
 
     STATUS_PENDING = "Pending"
     STATUS_RUNNING = "Running…"
@@ -61,6 +64,7 @@ class BatchView(QWidget):
         super().__init__()
         self._files: list[PdfFile] = []
         self._running = False
+        self._results: list[PdfFile] = []
         self._signals = _Signals()
         self._signals.one_done.connect(self._on_one_done)
         self._signals.one_error.connect(self._on_one_error)
@@ -69,6 +73,10 @@ class BatchView(QWidget):
 
     # ---------- API ----------
     def set_files(self, files: list[PdfFile]):
+        if self._running:
+            # The queue is being processed row-by-row; changing it mid-run
+            # would point status updates at the wrong rows.
+            return
         self._files = list(files)
         self._refresh_table()
 
@@ -98,7 +106,7 @@ class BatchView(QWidget):
 
         self.op_desc = QLabel()
         self.op_desc.setWordWrap(True)
-        self.op_desc.setStyleSheet("color:#9aa1b2;font-size:12px;")
+        self.op_desc.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;")
         tv.addWidget(self.op_desc)
 
         self.param_stack = QStackedWidget()
@@ -131,7 +139,7 @@ class BatchView(QWidget):
         title.setStyleSheet("font-size:15px;font-weight:600;")
         head.addWidget(title)
         self.count_label = QLabel("0 files")
-        self.count_label.setStyleSheet("color:#9aa1b2;font-size:12px;")
+        self.count_label.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;")
         head.addWidget(self.count_label)
         head.addStretch()
         reset_btn = QPushButton("Reset status")
@@ -147,10 +155,10 @@ class BatchView(QWidget):
         self.tree.setAlternatingRowColors(False)
         self.tree.setFrameShape(QFrame.NoFrame)
         self.tree.setStyleSheet(
-            "QTreeWidget{background:#1d2130;border:1px solid #2a2f42;border-radius:6px;}"
+            f"QTreeWidget{{background:{BG_2};border:1px solid {BORDER};border-radius:6px;}}"
             "QTreeWidget::item{padding:6px 4px;}"
-            "QHeaderView::section{background:#161922;color:#9aa1b2;"
-            "padding:6px 8px;border:none;border-bottom:1px solid #2a2f42;font-weight:600;}"
+            f"QHeaderView::section{{background:{BG_1};color:{TEXT_MUTED};"
+            f"padding:6px 8px;border:none;border-bottom:1px solid {BORDER};font-weight:600;}}"
         )
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -178,12 +186,14 @@ class BatchView(QWidget):
 
     def _card(self) -> QFrame:
         f = QFrame()
-        f.setStyleSheet("QFrame{background:#161922;border:1px solid #2a2f42;border-radius:8px;}")
+        f.setStyleSheet(
+            f"QFrame{{background:{BG_1};border:1px solid {BORDER};border-radius:8px;}}"
+        )
         return f
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet("color:#9aa1b2;font-size:12px;font-weight:500;")
+        lbl.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;font-weight:500;")
         return lbl
 
     def _build_param_panels(self):
@@ -304,7 +314,7 @@ class BatchView(QWidget):
                 self.STATUS_PENDING,
             ])
             item.setToolTip(0, str(pdf.path))
-            item.setForeground(2, QBrush(QColor("#9aa1b2")))
+            item.setForeground(2, QBrush(QColor(TEXT_MUTED)))
             self.tree.addTopLevelItem(item)
         n = len(self._files)
         self.count_label.setText(f"{n} file{'s' if n != 1 else ''}")
@@ -316,7 +326,8 @@ class BatchView(QWidget):
         for i in range(self.tree.topLevelItemCount()):
             it = self.tree.topLevelItem(i)
             it.setText(2, self.STATUS_PENDING)
-            it.setForeground(2, QBrush(QColor("#9aa1b2")))
+            it.setToolTip(2, "")
+            it.setForeground(2, QBrush(QColor(TEXT_MUTED)))
         self.progress.setValue(0)
 
     # ---------- Execution ----------
@@ -332,6 +343,7 @@ class BatchView(QWidget):
             return
 
         self._running = True
+        self._results = []
         self.run_btn.setEnabled(False)
         self.run_btn.setText("Running…")
         self.progress.setMaximum(len(jobs))
@@ -339,11 +351,12 @@ class BatchView(QWidget):
         for row, _ in jobs:
             item = self.tree.topLevelItem(row)
             item.setText(2, self.STATUS_PENDING)
-            item.setForeground(2, QBrush(QColor("#9aa1b2")))
+            item.setToolTip(2, "")
+            item.setForeground(2, QBrush(QColor(TEXT_MUTED)))
         # Mark first as running
         if jobs:
             self.tree.topLevelItem(jobs[0][0]).setText(2, self.STATUS_RUNNING)
-            self.tree.topLevelItem(jobs[0][0]).setForeground(2, QBrush(QColor("#5b8cff")))
+            self.tree.topLevelItem(jobs[0][0]).setForeground(2, QBrush(QColor(ACCENT)))
 
         self._pending_rows = [r for r, _ in jobs]
         runner = _BatchRunner(self._signals, jobs)
@@ -416,11 +429,15 @@ class BatchView(QWidget):
 
         raise ValueError(f"Unknown operation: {key}")
 
-    def _on_one_done(self, row: int, _result):
+    def _on_one_done(self, row: int, result):
         item = self.tree.topLevelItem(row)
         if item:
             item.setText(2, self.STATUS_DONE)
-            item.setForeground(2, QBrush(QColor("#30a46c")))
+            item.setForeground(2, QBrush(QColor(SUCCESS)))
+        if isinstance(result, PdfFile):
+            self._results.append(result)
+        elif isinstance(result, list):
+            self._results.extend(r for r in result if isinstance(r, PdfFile))
         self._advance_progress(row)
 
     def _on_one_error(self, row: int, msg: str):
@@ -428,7 +445,7 @@ class BatchView(QWidget):
         if item:
             item.setText(2, self.STATUS_ERROR)
             item.setToolTip(2, msg)
-            item.setForeground(2, QBrush(QColor("#e5484d")))
+            item.setForeground(2, QBrush(QColor(DANGER)))
         self._advance_progress(row)
 
     def _advance_progress(self, row: int):
@@ -444,7 +461,7 @@ class BatchView(QWidget):
                 nxt_item = self.tree.topLevelItem(nxt)
                 if nxt_item and nxt_item.text(2) == self.STATUS_PENDING:
                     nxt_item.setText(2, self.STATUS_RUNNING)
-                    nxt_item.setForeground(2, QBrush(QColor("#5b8cff")))
+                    nxt_item.setForeground(2, QBrush(QColor(ACCENT)))
 
     def _on_all_done(self):
         self._running = False
@@ -455,3 +472,7 @@ class BatchView(QWidget):
         err = sum(1 for i in range(self.tree.topLevelItemCount())
                   if self.tree.topLevelItem(i).text(2) == self.STATUS_ERROR)
         self.status_message.emit(f"Batch finished — {ok} ok, {err} failed", 5000)
+        if self._results:
+            # Let the main window add the new files to the library.
+            self.files_produced.emit(list(self._results))
+            self._results = []

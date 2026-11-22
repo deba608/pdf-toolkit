@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 
 from src.core.models import PdfFile
 from src.core.pdf_engine import PERM_ALL, PERM_PRINT
+from src.ui.theme import TEXT_FAINT, TEXT_MUTED
 
 
 def _parse_page_list(text: str, page_count: int, zero_based: bool = False):
@@ -83,7 +84,6 @@ class ToolPanelsStack(QWidget):
             "encrypt": self._create_encrypt_panel(),
             "decrypt": self._create_decrypt_panel(),
             "compress": self._create_compress_panel(),
-            "linearize": self._create_linearize_panel(),
             "to images": self._create_to_images_panel(),
             "images to pdf": self._create_images_to_pdf_panel(),
         }
@@ -107,12 +107,12 @@ class ToolPanelsStack(QWidget):
 
     def _field_label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet("color:#9aa1b2;font-size:12px;font-weight:500;")
+        lbl.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;font-weight:500;")
         return lbl
 
     def _hint(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet("color:#6b7284;font-size:11px;")
+        lbl.setStyleSheet(f"color:{TEXT_FAINT};font-size:11px;")
         lbl.setWordWrap(True)
         return lbl
 
@@ -372,21 +372,6 @@ class ToolPanelsStack(QWidget):
         btn = self._primary_button("Compress PDF", lambda: self._emit("compress", lambda: {
             "quality": self.comp_quality.value()
         }))
-        layout.addSpacing(6)
-        layout.addWidget(btn)
-        layout.addStretch()
-        return w
-
-    def _create_linearize_panel(self):
-        w = QWidget()
-        layout = QVBoxLayout(w)
-        layout.setSpacing(10)
-        layout.addWidget(self._hint(
-            "Linearizing reorganizes the file so a web viewer can display the "
-            "first page before the whole document has downloaded."
-        ))
-
-        btn = self._primary_button("Linearize PDF", lambda: self._emit("linearize", lambda: {}))
         layout.addSpacing(6)
         layout.addWidget(btn)
         layout.addStretch()
