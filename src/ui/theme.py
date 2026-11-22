@@ -133,13 +133,22 @@ QListWidget#Sidebar::item:selected {{
 
 QLabel#SidebarTitle {{
     color: {TEXT_1};
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    letter-spacing: -0.3px;
 }}
 QLabel#SidebarSubtitle {{
     color: {TEXT_3};
     font-size: 11px;
+    padding: 0 2px;
+}}
+QLabel#Badge {{
+    background: {PRIMARY_SOFT};
+    color: {PRIMARY_HOVER};
+    font-size: 10px;
+    font-weight: 600;
+    border: 1px solid rgba(100, 108, 255, 0.36);
+    border-radius: {RADIUS_FULL}px;
+    padding: 2px 8px;
 }}
 QLabel#SidebarSection {{
     color: {TEXT_3};
@@ -166,6 +175,54 @@ QLabel#HeaderTitle {{
 QLabel#HeaderSubtitle {{
     color: {TEXT_2};
     font-size: 12px;
+}}
+
+QFrame#ActiveFilePill {{
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_FULL}px;
+}}
+QLabel#ActiveFilePillText {{
+    color: {TEXT_1};
+    font-size: 12px;
+    font-weight: 500;
+}}
+
+QPushButton#HelpBtn {{
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_SM}px;
+    background: transparent;
+    color: {TEXT_2};
+}}
+QPushButton#HelpBtn:hover {{
+    background: {PRIMARY_SOFT};
+    border: 1px solid rgba(100, 108, 255, 0.24);
+    color: {TEXT_1};
+}}
+
+/* ---------- Section labels ---------- */
+QLabel#SectionTitle {{
+    font-size: 15px;
+    font-weight: 600;
+    color: {TEXT_1};
+}}
+QLabel#SectionLabel {{
+    color: {TEXT_MUTED};
+    font-size: 12px;
+}}
+
+/* ---------- Floating / banner styles ---------- */
+QFrame#NoFileBanner {{
+    background: {CANVAS_ALT};
+    border-top: 1px solid {BORDER_SUBTLE};
+    border-bottom: 1px solid {BORDER_SUBTLE};
+}}
+QFrame#NoFileBanner QLabel#NoFileLabel {{
+    color: {TEXT_2};
+    font-size: 12px;
+    font-weight: 500;
 }}
 
 /* ---------- Containers & Feature Cards (Elevated #202127) ---------- */

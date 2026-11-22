@@ -190,22 +190,17 @@ class MainWindow(QMainWindow):
         brand_icon.setPixmap(get_pixmap("pdf", ACCENT_PURPLE, 20))
         brand_title = QLabel("PDF Toolkit")
         brand_title.setObjectName("SidebarTitle")
-        brand_title.setStyleSheet(f"font-size:15px;font-weight:600;color:{TEXT_1};padding:0;")
         brand_row.addWidget(brand_icon)
         brand_row.addWidget(brand_title)
         brand_row.addStretch()
 
         badge = QLabel("OFFLINE")
-        badge.setStyleSheet(
-            f"background:{PRIMARY_SOFT};color:{PRIMARY_HOVER};font-size:10px;font-weight:600;"
-            f"border:1px solid rgba(100,108,255,0.36);border-radius:9999px;padding:2px 8px;"
-        )
+        badge.setObjectName("Badge")
         brand_row.addWidget(badge)
         hv.addLayout(brand_row)
 
         sub = QLabel("Fast · Private · Secure")
         sub.setObjectName("SidebarSubtitle")
-        sub.setStyleSheet(f"color:{TEXT_3};font-size:11px;padding:0 2px;")
         hv.addWidget(sub)
         v.addWidget(header_widget)
 
@@ -280,14 +275,7 @@ class MainWindow(QMainWindow):
 
         # Active file badge pill in header
         self.active_file_pill = QFrame()
-        self.active_file_pill.setStyleSheet(
-            f"QFrame{{"
-            f"  background:{CANVAS_ELV};"
-            f"  border:1px solid {BORDER_SUBTLE};"
-            f"  border-radius:9999px;"
-            f"  padding:2px 10px;"
-            f"}}"
-        )
+        self.active_file_pill.setObjectName("ActiveFilePill")
         pill_layout = QHBoxLayout(self.active_file_pill)
         pill_layout.setContentsMargins(8, 4, 8, 4)
         pill_layout.setSpacing(8)
@@ -295,7 +283,7 @@ class MainWindow(QMainWindow):
         self.pill_icon = QLabel()
         self.pill_icon.setPixmap(get_pixmap("pdf", PRIMARY, 16))
         self.pill_text = QLabel("No active file")
-        self.pill_text.setStyleSheet(f"color:{TEXT_1};font-size:12px;font-weight:500;")
+        self.pill_text.setObjectName("ActiveFilePillText")
         pill_layout.addWidget(self.pill_icon)
         pill_layout.addWidget(self.pill_text)
 
@@ -315,10 +303,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.save_btn)
 
         self.help_btn = QPushButton("?")
-        self.help_btn.setObjectName("Ghost")
+        self.help_btn.setObjectName("HelpBtn")
         self.help_btn.setFixedSize(30, 30)
         self.help_btn.setToolTip("Keyboard Shortcuts & Help (F1)")
-        self.help_btn.setStyleSheet(f"font-weight:500;font-size:13px;border:1px solid {BORDER_SUBTLE};border-radius:6px;")
         self.help_btn.clicked.connect(self._show_shortcuts)
         layout.addWidget(self.help_btn)
 
@@ -362,11 +349,11 @@ class MainWindow(QMainWindow):
 
         header_row = QHBoxLayout()
         title = QLabel("PDF Library")
-        title.setStyleSheet("font-size:15px;font-weight:600;")
+        title.setObjectName("SectionTitle")
         header_row.addWidget(title)
 
         self.library_count_label = QLabel("0 files")
-        self.library_count_label.setStyleSheet(f"color:{TEXT_MUTED};font-size:12px;margin-left:4px;")
+        self.library_count_label.setObjectName("SectionLabel")
         header_row.addWidget(self.library_count_label)
 
         header_row.addStretch()
@@ -445,16 +432,11 @@ class MainWindow(QMainWindow):
 
         # No-file banner with quick open button
         self.no_file_banner = QFrame()
-        self.no_file_banner.setStyleSheet(
-            f"background:{CANVAS_ALT};"
-            f"border-top:1px solid {BORDER_SUBTLE};"
-            f"border-bottom:1px solid {BORDER_SUBTLE};"
-            f"padding:8px 14px;"
-        )
+        self.no_file_banner.setObjectName("NoFileBanner")
         nfb_layout = QHBoxLayout(self.no_file_banner)
         nfb_layout.setContentsMargins(10, 6, 10, 6)
         nfb_label = QLabel("Notice: No PDF loaded. Open a PDF to configure and run this tool.")
-        nfb_label.setStyleSheet(f"color:{TEXT_2};font-size:12px;font-weight:500;")
+        nfb_label.setObjectName("NoFileLabel")
         nfb_btn = QPushButton("Open PDF…")
         nfb_btn.setObjectName("Primary")
         nfb_btn.setIcon(get_icon("add", "#ffffff", 12))
