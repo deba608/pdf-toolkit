@@ -98,7 +98,7 @@ class ToolPanelsStack(QWidget):
 
         self.empty = QLabel("Select a tool from the sidebar navigation")
         self.empty.setAlignment(Qt.AlignCenter)
-        self.empty.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 14px;")
+        self.empty.setObjectName("EmptyState")
         self.stack.addWidget(self.empty)
         self.stack.setCurrentWidget(self.empty)
 
@@ -140,16 +140,14 @@ class ToolPanelsStack(QWidget):
 
     def _info_banner(self, text: str, icon_name: str = "pdf") -> QFrame:
         banner = QFrame()
-        banner.setStyleSheet(
-            f"background:{CANVAS_ALT};border:1px solid {BORDER_SUBTLE};border-radius:8px;padding:8px 12px;"
-        )
+        # QSS handles styling via theme
         hb = QHBoxLayout(banner)
         hb.setContentsMargins(4, 2, 4, 2)
         hb.setSpacing(10)
         ic = QLabel()
         ic.setPixmap(get_pixmap(icon_name, PRIMARY, 18))
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:{TEXT_2};font-size:12px;font-weight:500;")
+        lbl.setObjectName("InfoText")
         lbl.setWordWrap(True)
         hb.addWidget(ic)
         hb.addWidget(lbl, 1)

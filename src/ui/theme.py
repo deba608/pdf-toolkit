@@ -188,6 +188,13 @@ QLabel#ActiveFilePillText {{
     font-weight: 500;
 }}
 
+/* ---------- Empty state ---------- */
+QLabel#EmptyState {{
+    color: {TEXT_MUTED};
+    font-size: 14px;
+    font-weight: 500;
+}}
+
 /* ---------- Section headers ---------- */
 QLabel#SectionHeader {{
     color: {TEXT_1};
@@ -307,6 +314,20 @@ QPushButton#Primary:disabled {{
     background: {CANVAS_SOFT};
     color: {TEXT_3};
     border: 1px solid {BORDER_SUBTLE};
+}}
+
+/* ---------- Tool headers ---------- */
+QLabel#ToolHeaderTitle {{
+    font-size: 16px;
+    font-weight: 500;
+    color: {PRIMARY};
+    padding: 16px 18px 2px 18px;
+}}
+
+QLabel#ToolHeaderDesc {{
+    color: {TEXT_2};
+    font-size: 12px;
+    padding: 0 18px 14px 18px;
 }}
 
 /* ---------- Section labels ---------- */

@@ -5,15 +5,15 @@
 <img src="assets/logo.svg" alt="PDF Toolkit logo" width="140" />
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![PySide6](https://img.shields.io/badge/PySide6-6.12-41CD52?style=for-the-badge&logo=qt&logoColor=white)
-![PyMuPDF](https://img.shields.io/badge/PyMuPDF-2.1-FF6B35?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)
+![PySide6](https://img.shields.io/badge/PySide6-6.7%2B-41CD52?style=for-the-badge&logo=qt&logoColor=white)
+![PyMuPDF](https://img.shields.io/badge/PyMuPDF-1.23%2B-FF6B35?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D4?style=for-the-badge&logo=windows&logoColor=white)
 ![Build](https://img.shields.io/badge/Build-PyInstaller-FF69B4?style=for-the-badge)
 
 **A powerful, offline-first desktop application for all your PDF needs.**
 
-[Features](#-features) • [Screenshots](#-screenshots) • [Installation](#-installation) • [Usage](#-usage) • [Building](#-building-standalone-executable) • [Architecture](#-architecture) • [Contributing](#-contributing) • [License](#-license)
+[Features](#-features) • [Screenshots](#-screenshots) • [Installation](#-installation) • [Usage](#-usage) • [User Guide](docs/USER_GUIDE.md) • [Building](#-building-standalone-executable) • [Architecture](#-architecture) • [Contributing](#-contributing) • [License](#-license)
 
 </div>
 
@@ -21,11 +21,11 @@
 
 ## About
 
-**PDF Toolkit** is an open-source, offline-first desktop PDF utility for Windows, macOS, and Linux. It brings common PDF workflows into one local app: merge, split, rotate, reorder, watermark, encrypt/decrypt, compress, and convert between PDFs and images. Built with Python, PySide6, and PyMuPDF, it keeps documents on your machine with no cloud upload, telemetry, or account requirement.
+**PDF Toolkit** is an open-source, offline-first desktop PDF utility for Windows, macOS, and Linux. It brings common PDF workflows into one local app: merge, split, rotate, reorder, watermark, encrypt/decrypt, compress, and convert between PDFs and images. Built with Python, PySide6, and PyMuPDF, it pairs a Vite-inspired dark UI with local processing — no cloud upload, telemetry, or account requirement.
 
 ## 🎯 Overview
 
-PDF Toolkit is a **completely offline** desktop application built with Python, Qt6 (PySide6), and PyMuPDF. It provides a comprehensive suite of PDF manipulation tools without ever sending your documents to the cloud. Perfect for handling sensitive documents, working in air-gapped environments, or simply avoiding upload limits.
+PDF Toolkit is a **completely offline** desktop application built with Python, Qt6 (PySide6), and PyMuPDF. It provides a suite of PDF manipulation tools in a Vite-inspired dark interface without ever sending your documents to the cloud. Perfect for handling sensitive documents, working in air-gapped environments, or simply avoiding upload limits.
 
 ### Why PDF Toolkit?
 
@@ -71,7 +71,7 @@ PDF Toolkit is a **completely offline** desktop application built with Python, Q
 | **OCR** *(planned)* | Make scanned PDFs searchable with Tesseract |
 
 ### 🖥️ User Experience
-- **Dark theme** designed for long sessions
+- **Vite-inspired dark theme** — charcoal surfaces, indigo accents, Inter-style typography
 - **Drag & drop** files directly into the window, drag to reorder
 - **Native PDF preview** (QtPdf) — offline, zoomable, password-aware
 - **Keyboard shortcuts** for power users
@@ -117,13 +117,13 @@ python -m src.main
 ### Standalone Executable (No Python Required)
 Download the latest release from the [Releases page](https://github.com/deba608/pdf-toolkit/releases):
 
-| Platform | File | Size |
-|----------|------|------|
-| Windows x64 | `PDF Toolkit.exe` (release) or `PDF Toolkit/` folder (fast build) | ~40–70 MB |
+| Platform | Build | File |
+|----------|-------|------|
+| Windows x64 | Fast (`rebuild.ps1`) | `dist\PDF Toolkit.exe` |
+| Windows x64 | Release (`build.py --release` / `rebuild.ps1 release`) | `dist\PDF Toolkit.exe` |
 
-Only Windows binaries are produced by `build.py` today. The source runs
-anywhere PySide6 and PyMuPDF are available; macOS/Linux packaging is not
-set up yet.
+Only Windows binaries are produced today. The source runs anywhere PySide6
+and PyMuPDF are available; macOS/Linux packaging is not set up yet.
 
 > **Windows SmartScreen**: Since the app isn't code-signed, you may see "Windows protected your PC". Click "More info" → "Run anyway". This is normal for open-source unsigned binaries.
 
@@ -183,34 +183,43 @@ Home → Open document → Sidebar: Encrypt → User Password: [strong] → Owne
 pip install pyinstaller
 ```
 
-### Build Command
+### Build Commands
 ```bash
-# Fast incremental onedir build (development, ~1 min after the first run)
-python build.py
+# Fast incremental dev build — frozen spec, one-file exe
+python -m PyInstaller -y "PDF Toolkit.spec"
+./rebuild.ps1
 
-# Full one-file release build
+# Full clean one-file release build
 python build.py --release
+./rebuild.ps1 release
+```
 
-# PowerShell wrappers
-./rebuild.ps1            # fast
-./rebuild.ps1 release    # release
+`python build.py` with no flags still uses PyInstaller's onedir mode; use the
+frozen spec or a wrapper script for the fast one-file output. After changing
+imports, resources, or exclusions, regenerate the static spec:
+
+```bash
+python freeze_spec.py    # rewrites PDF Toolkit.spec
 ```
 
 ### Build Output
 ```
 dist/
-├── PDF Toolkit/
-│   └── PDF Toolkit.exe      # fast build: onedir folder
-└── PDF Toolkit.exe          # release build: single file
+├── PDF Toolkit.exe              # frozen-spec fast build / release build
+└── PDF Toolkit/
+    └── PDF Toolkit.exe          # only from bare `python build.py` (onedir)
 ```
 
-The version shown in the executable metadata comes from
-`src/__version__.py`. Edit that file to bump the release.
+Version metadata is generated from `src/__version__.py`: on Windows,
+`build.py --release` rewrites `version.txt`, which the frozen spec reads.
+Bump the version there before building.
 
 ### What gets bundled
 Only the Qt modules the app imports (`QtCore`, `QtGui`, `QtWidgets`,
-`QtPdf`, `QtPdfWidgets`, `QtNetwork`, `QtPrintSupport`). QtWebEngine is
-explicitly excluded, so the build stays small and works fully offline.
+`QtPdf`, `QtPdfWidgets`, `QtNetwork`, `QtPrintSupport`). The frozen spec
+stores these values statically so repeated builds can reuse PyInstaller's
+cache. QtWebEngine is explicitly excluded, so the build stays small and
+works fully offline.
 
 ---
 
@@ -226,8 +235,9 @@ pdf-toolkit/
 │   │   ├── models.py              # PdfFile, PdfPage, OperationResult
 │   │   └── pdf_engine.py          # PyMuPDF wrapper — every PDF operation
 │   ├── ui/
+│   │   ├── icons.py               # Vector icons rendered from SVG paths
 │   │   ├── main_window.py         # MainWindow: sidebar nav, menus, threading, wiring
-│   │   ├── theme.py               # Dark theme palette + QSS tokens
+│   │   ├── theme.py               # Vite-inspired dark palette + QSS tokens
 │   │   └── widgets/
 │   │       ├── file_list.py       # Draggable library list
 │   │       ├── preview.py         # Native QtPdf preview (QPdfView)
@@ -236,10 +246,17 @@ pdf-toolkit/
 │   └── resources/
 │       ├── icon.ico
 │       └── icon.png
+├── docs/
+│   └── USER_GUIDE.md              # End-user workflows and tool reference
 ├── tests/                         # Plain-Python test scripts (no pytest needed)
-├── build.py                       # PyInstaller build script
-├── PDF Toolkit.spec               # Equivalent spec file (build.py preferred)
+├── build.py                       # Full clean PyInstaller build script
+├── freeze_spec.py                 # Regenerates the static PyInstaller spec
+├── PDF Toolkit.spec               # Frozen spec used by the fast one-file build
+├── rebuild.ps1 / rebuild.bat      # Fast and release build wrappers
+├── DESIGN.md                      # UI design tokens
 ├── requirements.txt               # Python dependencies
+├── CHANGELOG.md                   # Release notes
+├── CONTRIBUTING.md                # Contribution guide
 ├── LICENSE                        # MIT License
 └── README.md                      # This file
 ```
@@ -261,8 +278,8 @@ pdf-toolkit/
 2. **Performance**: Stream processing for large files; background threads for all I/O.
 3. **Safety**: Never modify originals — always write to new paths.
 4. **Privacy**: No analytics, no crash reporting, no phone-home.
-5. **Accessibility**: WCAG 2.1 AA — keyboard nav, screen readers, high contrast.
-6. **Extensibility**: Command pattern + plugin-ready tool registry.
+5. **Accessibility**: Keyboard navigation, screen-reader labels, high-contrast dark palette.
+6. **Extensibility**: Tool registry maps sidebar actions to panels and engine calls; plugins are planned for v2.0.
 
 ---
 
@@ -363,6 +380,7 @@ $env:QT_QPA_PLATFORM="offscreen"
 | Large PDFs (>500 MB) may cause memory pressure | By design | Split first, then process |
 | Encrypted PDFs with unknown encryption handlers | PyMuPDF limitation | Decrypt with another tool first |
 | Binary is not code-signed | By design | SmartScreen: More info → Run anyway |
+| `rebuild.bat` fast mode checks the old onedir path after a one-file build | Wrapper lag | Use `rebuild.ps1` or `python -m PyInstaller -y "PDF Toolkit.spec"` |
 
 Report new issues at [GitHub Issues](https://github.com/deba608/pdf-toolkit/issues).
 
@@ -410,6 +428,7 @@ SOFTWARE.
 
 | Resource | Link |
 |----------|------|
+| **User Guide** | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) |
 | **Repository** | https://github.com/deba608/pdf-toolkit |
 | **Issues / Bug Reports** | https://github.com/deba608/pdf-toolkit/issues |
 | **Discussions** | https://github.com/deba608/pdf-toolkit/discussions |

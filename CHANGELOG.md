@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The library de-duplicates files by full path
 - Fast onedir build mode by default; release mode is opt-in
 - PyInstaller collects only the Qt modules the app imports
+- README refreshed (2026-11-23) to replace stale onedir build instructions
+  with the current one-file fast path, note the Vite-inspired UI, and link the
+  existing User Guide
 
 ### Removed
 - QtWebEngine / PDF.js preview and `viewer.html`

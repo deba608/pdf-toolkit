@@ -49,11 +49,8 @@ if errorlevel 1 (
 )
 
 echo.
-if /I "%MODE%"=="release" (
-    set EXE=dist\PDF Toolkit.exe
-) else (
-    set EXE=dist\PDF Toolkit\PDF Toolkit.exe
-)
+# Both modes: frozen spec produces onefile exe at dist\PDF Toolkit.exe
+set EXE=dist\PDF Toolkit.exe
 
 if exist "%EXE%" (
     echo [3/3] Build SUCCESS!
