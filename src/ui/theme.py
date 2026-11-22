@@ -234,6 +234,27 @@ QFrame#NoFileBanner QLabel#NoFileLabel {{
     font-weight: 500;
 }}
 
+/* ---------- Empty state / file list ---------- */
+QFrame#EmptyZone {{
+    background: {CANVAS_ALT};
+    border: 2px dashed {BORDER};
+    border-radius: {RADIUS_MD}px;
+    padding: 40px 20px;
+}}
+
+/* ---------- Empty state title ---------- */
+QLabel#EmptyTitle {{
+    font-size: 14px;
+    font-weight: 600;
+    color: {TEXT_1};
+}}
+
+/* ---------- Empty state description ---------- */
+QLabel#EmptyDesc {{
+    font-size: 12px;
+    color: {TEXT_2};
+}}
+
 /* ---------- Preview toolbar ---------- */
 QFrame#PreviewToolbar {{
     background: {CANVAS_ELV};
