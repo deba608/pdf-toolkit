@@ -19,7 +19,7 @@ from src.core.pdf_engine import PdfEngine
 from src.paths import resource_path
 from src.ui.icons import get_icon, get_pixmap
 from src.ui.theme import (
-    ACCENT, BG_1, BG_2, BORDER, BORDER_STRONG, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
+    ACCENT, ACCENT2, BG_1, BG_2, BORDER, BORDER_STRONG, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED, WARN
 )
 from src.ui.widgets.batch_view import BatchView
 from src.ui.widgets.file_list import FileListWidget
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
         brand_row = QHBoxLayout()
         brand_row.setSpacing(8)
         brand_icon = QLabel()
-        brand_icon.setPixmap(get_pixmap("pdf", DANGER, 22))
+        brand_icon.setPixmap(get_pixmap("pdf", ACCENT2, 22))
         brand_title = QLabel("PDF Toolkit")
         brand_title.setObjectName("SidebarTitle")
         brand_title.setStyleSheet("font-size:16px;font-weight:700;padding:0;")
@@ -289,7 +289,7 @@ class MainWindow(QMainWindow):
         pill_layout.setSpacing(8)
 
         self.pill_icon = QLabel()
-        self.pill_icon.setPixmap(get_pixmap("pdf", DANGER, 16))
+        self.pill_icon.setPixmap(get_pixmap("pdf", ACCENT2, 16))
         self.pill_text = QLabel("No active file")
         self.pill_text.setStyleSheet(f"color:{TEXT};font-size:12px;font-weight:500;")
         pill_layout.addWidget(self.pill_icon)

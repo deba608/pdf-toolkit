@@ -8,7 +8,7 @@ from PySide6.QtGui import (
     QBrush, QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap
 )
 
-from src.ui.theme import ACCENT, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED
+from src.ui.theme import ACCENT, ACCENT2, DANGER, TEXT, TEXT_FAINT, TEXT_MUTED
 
 
 def _create_canvas(size: int = 24) -> tuple[QPixmap, QPainter]:
