@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Build launcher for PDF Toolkit (PowerShell).
 
-#   ./rebuild.ps1               Fast incremental dev build (onedir, frozen spec)
+#   ./rebuild.ps1               Fast incremental dev build (frozen spec, onefile exe)
 #   ./rebuild.ps1 release        Full one-file release build
 
 param([string]$Mode = "fast")
@@ -20,7 +20,7 @@ if ($Mode -eq "release") {
     if (Test-Path "dist") { Remove-Item "dist" -Recurse -Force }
 } else {
     Write-Host "[1/3] Fast incremental build (frozen spec)..." -ForegroundColor Yellow
-    # Clean old build artifacts so the fresh onedir build's output is not pre-emptively moved.
+    # Clean old build artifacts so the fresh build's output is not pre-emptively moved.
     # Windows locks DLLs/exes from recent runs, so we clean best-effort before building.
     if (Test-Path "dist\PDF Toolkit") {
         Remove-Item "dist\PDF Toolkit" -Recurse -Force -ErrorAction SilentlyContinue
@@ -48,11 +48,8 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-if ($Mode -eq "release") {
-    $exe = "dist\PDF Toolkit.exe"
-} else {
-    $exe = "dist\PDF Toolkit\PDF Toolkit.exe"
-}
+# Both modes: frozen spec produces onefile exe at dist\PDF Toolkit.exe
+$exe = "dist\PDF Toolkit.exe"
 
 Write-Host ""
 if (Test-Path $exe) {
