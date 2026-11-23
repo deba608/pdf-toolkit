@@ -412,9 +412,10 @@ class MainWindow(QMainWindow):
         # Left: tool form in a card
         left = self._make_card()
         lv = QVBoxLayout(left)
-        lv.setContentsMargins(0, 0, 0, 0)
-        lv.setSpacing(0)
+        lv.setContentsMargins(12, 12, 12, 12)
+        lv.setSpacing(12)
 
+        # Tool header
         self.tool_header_title = QLabel("Tool")
         self.tool_header_title.setObjectName("ToolHeaderTitle")
         self.tool_header_desc = QLabel("")
@@ -423,22 +424,19 @@ class MainWindow(QMainWindow):
         lv.addWidget(self.tool_header_title)
         lv.addWidget(self.tool_header_desc)
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.HLine)
-        sep.setStyleSheet(f"background:{BORDER_SUBTLE};max-height:1px;border:none;")
-        lv.addWidget(sep)
-
-        # No-file banner with quick open button
+        # No-file banner with secondary open button
         self.no_file_banner = QFrame()
         self.no_file_banner.setObjectName("NoFileBanner")
         nfb_layout = QHBoxLayout(self.no_file_banner)
-        nfb_layout.setContentsMargins(10, 6, 10, 6)
-        nfb_label = QLabel("Notice: No PDF loaded. Open a PDF to configure and run this tool.")
+        nfb_layout.setContentsMargins(14, 10, 14, 10)
+        nfb_layout.setSpacing(12)
+        nfb_label = QLabel("No active PDF selected. Open or select a document to configure this tool.")
         nfb_label.setObjectName("NoFileLabel")
-        nfb_btn = QPushButton("Open PDF…")
-        nfb_btn.setObjectName("Primary")
-        nfb_btn.setIcon(get_icon("add", "#ffffff", 12))
-        nfb_btn.setFixedHeight(28)
+        nfb_label.setWordWrap(True)
+        nfb_btn = QPushButton("  Open PDF…")
+        nfb_btn.setObjectName("Secondary")
+        nfb_btn.setIcon(get_icon("add", TEXT_1, 12))
+        nfb_btn.setFixedHeight(30)
         nfb_btn.clicked.connect(self._open_files)
         nfb_layout.addWidget(nfb_label, 1)
         nfb_layout.addWidget(nfb_btn)
@@ -448,6 +446,8 @@ class MainWindow(QMainWindow):
         self.tool_panels = ToolPanelsStack()
         self.tool_panels.operation_requested.connect(self._run_operation)
         self.tool_panels.validation_failed.connect(self._show_validation_error)
+        self.tool_panels.add_files_requested.connect(self._open_files)
+        self.tool_panels.files_reordered.connect(self._on_files_reordered)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -468,7 +468,7 @@ class MainWindow(QMainWindow):
         self.tool_preview_stack = QStackedWidget()
         self.tool_preview_empty = self._build_empty_state(
             "No PDF Selected",
-            "Load a PDF from the Home view to preview it here."
+            "Select a document from the library, or drop a PDF file here to preview it."
         )
         self.tool_preview = PreviewWidget()
         self.tool_preview_stack.addWidget(self.tool_preview_empty)
@@ -476,7 +476,9 @@ class MainWindow(QMainWindow):
         rv.addWidget(self.tool_preview_stack, 1)
 
         splitter.addWidget(right)
-        splitter.setSizes([460, 740])
+        splitter.setSizes([540, 660])
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 1)
         outer.addWidget(splitter, 1)
         return wrap
 
@@ -497,8 +499,8 @@ class MainWindow(QMainWindow):
         w = QWidget()
         v = QVBoxLayout(w)
         v.setAlignment(Qt.AlignCenter)
-        v.setSpacing(10)
-        v.setContentsMargins(20, 20, 20, 20)
+        v.setSpacing(12)
+        v.setContentsMargins(24, 24, 24, 24)
 
         icon_label = QLabel()
         icon_label.setPixmap(get_pixmap("pdf", TEXT_3, 44))
@@ -511,13 +513,19 @@ class MainWindow(QMainWindow):
 
         s = QLabel(subtitle)
         s.setAlignment(Qt.AlignCenter)
-        s.setStyleSheet(f"font-size:12px;color:{TEXT_2};background:transparent;border:none;")
+        s.setStyleSheet(f"font-size:12px;line-height:18px;color:{TEXT_2};background:transparent;border:none;")
         s.setWordWrap(True)
+
+        hint = QLabel("Tip: Drag & drop PDF files anywhere, or press Ctrl+O to browse.")
+        hint.setAlignment(Qt.AlignCenter)
+        hint.setStyleSheet(f"font-size:11px;color:{TEXT_3};background:transparent;border:none;")
 
         v.addStretch()
         v.addWidget(icon_label)
         v.addWidget(t)
         v.addWidget(s)
+        v.addSpacing(4)
+        v.addWidget(hint)
         v.addStretch()
         return w
 
@@ -575,6 +583,7 @@ class MainWindow(QMainWindow):
             self.content_stack.setCurrentIndex(1)
             self.tool_header_title.setText(label)
             self.tool_header_desc.setText(desc)
+            self.tool_panels.set_files(self.files)
             self.tool_panels.show_tool(key)
             self._update_tool_banner(key)
             self._refresh_tool_preview_empty_state()
@@ -586,7 +595,7 @@ class MainWindow(QMainWindow):
         return key.title(), ""
 
     def _update_tool_banner(self, key: str):
-        needs_file = key not in {"images to pdf"}
+        needs_file = key not in {"images to pdf", "merge"}
         self.no_file_banner.setVisible(needs_file and self.current_file is None)
 
     def _refresh_preview_empty_state(self):
@@ -825,8 +834,10 @@ class MainWindow(QMainWindow):
 
     def _clear_files(self):
         self.file_list.clear()
+        self.files = []
         self.current_file = None
         self.tool_panels.set_file(None)
+        self.tool_panels.set_files([])
         self.preview.load_pdf(None)
         self.tool_preview.load_pdf(None)
         self._refresh_preview_empty_state()
@@ -836,6 +847,7 @@ class MainWindow(QMainWindow):
     def _sync_files(self):
         self.files = self.file_list.files
         self.batch_view.set_files(self.files)
+        self.tool_panels.set_files(self.files)
         count = len(self.files)
         if hasattr(self, "library_count_label"):
             self.library_count_label.setText(f"{count} file{'s' if count != 1 else ''}")
@@ -860,6 +872,16 @@ class MainWindow(QMainWindow):
     def _on_files_reordered(self, files: list[PdfFile]):
         self.files = list(files)
         self.batch_view.set_files(self.files)
+        self.tool_panels.set_files(self.files)
+        if [f.path.resolve() for f in self.file_list.files] != [f.path.resolve() for f in self.files]:
+            self.file_list.blockSignals(True)
+            self.file_list.list.blockSignals(True)
+            self.file_list.clear()
+            for f in self.files:
+                self.file_list.add_file(f)
+            self.file_list.list.blockSignals(False)
+            self.file_list.blockSignals(False)
+
         count = len(self.files)
         if hasattr(self, "library_count_label"):
             self.library_count_label.setText(f"{count} file{'s' if count != 1 else ''}")
