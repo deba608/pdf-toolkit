@@ -574,14 +574,15 @@ Append to `tests/test_redesign_ui.py`:
 
 ```python
 def test_home_view():
-    from PySide6.QtWidgets import QApplication, QPushButton
+    from PySide6.QtWidgets import QApplication, QLabel, QPushButton
     from src.ui.widgets.home_view import HomeView
 
     app = QApplication.instance() or QApplication([])
     home = HomeView()
     cards = [b for b in home.findChildren(QPushButton) if b.objectName() == "ToolCard"]
     assert len(cards) == 12
-    labels = [b.text() for b in cards]
+    labels = [l.text() for b in cards for l in b.findChildren(QLabel)
+              if l.objectName() == "ToolCardTitle"]
     assert any("Merge" in t for t in labels)
     assert any("Batch run" in t for t in labels)
     assert home.findChild(QPushButton, "HomeBrowseButton") is not None
