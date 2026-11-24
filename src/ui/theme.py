@@ -226,17 +226,24 @@ QFrame#InfoBanner {{
     border-radius: {RADIUS_MD}px;
     padding: 8px 12px;
 }}
+QLabel#InfoText {{
+    color: {TEXT_1};
+    font-size: 12px;
+    line-height: 18px;
+}}
 
 /* ---------- Floating / banner styles ---------- */
 QFrame#NoFileBanner {{
-    background: {CANVAS_ALT};
-    border-top: 1px solid {BORDER_SUBTLE};
-    border-bottom: 1px solid {BORDER_SUBTLE};
+    background: rgba(100, 108, 255, 0.08);
+    border: 1px solid rgba(100, 108, 255, 0.28);
+    border-radius: {RADIUS_MD}px;
+    padding: 8px 14px;
+    margin: 8px 14px 4px 14px;
 }}
 
 /* ---------- Floating / banner label ---------- */
 QFrame#NoFileBanner QLabel#NoFileLabel {{
-    color: {TEXT_2};
+    color: {TEXT_1};
     font-size: 12px;
     font-weight: 500;
 }}
@@ -312,8 +319,8 @@ QPushButton#Primary:pressed {{
 }}
 QPushButton#Primary:disabled {{
     background: {CANVAS_SOFT};
-    color: {TEXT_3};
-    border: 1px solid {BORDER_SUBTLE};
+    color: rgba(235, 235, 245, 0.60);
+    border: 1px solid {BORDER_SOFT};
 }}
 
 /* ---------- Tool headers ---------- */
@@ -341,16 +348,31 @@ QLabel#SectionLabel {{
     font-size: 12px;
 }}
 
-/* ---------- Floating / banner styles ---------- */
-QFrame#NoFileBanner {{
+/* ---------- Merge File Queue ---------- */
+QListWidget#MergeFileList {{
     background: {CANVAS_ALT};
-    border-top: 1px solid {BORDER_SUBTLE};
-    border-bottom: 1px solid {BORDER_SUBTLE};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_MD}px;
+    padding: 4px;
+    outline: 0;
 }}
-QFrame#NoFileBanner QLabel#NoFileLabel {{
-    color: {TEXT_2};
+QListWidget#MergeFileList::item {{
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_SM}px;
+    padding: 6px 10px;
+    margin: 2px 2px;
+    color: {TEXT_1};
     font-size: 12px;
-    font-weight: 500;
+}}
+QListWidget#MergeFileList::item:hover {{
+    background: {CANVAS_SOFT};
+    border: 1px solid rgba(100, 108, 255, 0.36);
+}}
+QListWidget#MergeFileList::item:selected {{
+    background: {PRIMARY_SOFT};
+    color: #ffffff;
+    border: 1px solid {PRIMARY};
 }}
 
 /* ---------- Containers & Feature Cards (Elevated #202127) ---------- */
@@ -498,9 +520,50 @@ QPushButton:pressed {{
     border: 1px solid {PRIMARY};
 }}
 QPushButton:disabled {{
-    color: {TEXT_3};
+    color: rgba(235, 235, 245, 0.50);
     background: {CANVAS_ELV};
     border: 1px solid {BORDER_SUBTLE};
+}}
+
+/* Secondary / outline button */
+QPushButton#Secondary {{
+    background: {CANVAS_SOFT};
+    color: {TEXT_1};
+    border: 1px solid {BORDER};
+    border-radius: {RADIUS_MD}px;
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 12px;
+}}
+QPushButton#Secondary:hover {{
+    background: {CANVAS_MUTE};
+    border: 1px solid rgba(100, 108, 255, 0.48);
+    color: #ffffff;
+}}
+QPushButton#Secondary:pressed {{
+    background: {CANVAS_ALT};
+}}
+QPushButton#Secondary:disabled {{
+    color: rgba(235, 235, 245, 0.40);
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+}}
+
+/* Help Button (Top Header) */
+QPushButton#HelpBtn {{
+    background: {CANVAS_SOFT};
+    color: {TEXT_1};
+    border: 1px solid {BORDER};
+    border-radius: {RADIUS_MD}px;
+    padding: 0;
+    font-weight: 600;
+    font-size: 13px;
+    min-height: 0px;
+}}
+QPushButton#HelpBtn:hover {{
+    background: {CANVAS_MUTE};
+    border: 1px solid {PRIMARY};
+    color: #ffffff;
 }}
 
 /* Primary Electric Indigo CTA (#646cff) */
@@ -525,8 +588,8 @@ QPushButton#Primary:pressed {{
 }}
 QPushButton#Primary:disabled {{
     background: {CANVAS_SOFT};
-    color: {TEXT_3};
-    border: 1px solid {BORDER_SUBTLE};
+    color: rgba(235, 235, 245, 0.60);
+    border: 1px solid {BORDER_SOFT};
 }}
 
 /* Ghost / text button */

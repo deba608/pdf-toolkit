@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout,
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPushButton, QSlider,
-    QSpinBox, QStackedWidget, QVBoxLayout, QWidget
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QSlider, QSpinBox, QStackedWidget, QVBoxLayout, QWidget
 )
 
 from src.core.models import PdfFile
@@ -63,18 +63,22 @@ def _parse_page_list(text: str, page_count: int, zero_based: bool = False):
 class ToolPanelsStack(QWidget):
     operation_requested = Signal(str, dict)
     validation_failed = Signal(str)
+    add_files_requested = Signal()
+    files_reordered = Signal(list)
 
     def __init__(self):
         super().__init__()
         self.current_file: PdfFile | None = None
+        self._files: list[PdfFile] = []
         self._page_count: int = 0
         self._actions: list[tuple[QPushButton, str]] = []
+        self._external_queue = False
         self._setup_ui()
 
     # ---------- setup ----------
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(22, 18, 22, 22)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.stack = QStackedWidget()
@@ -140,9 +144,9 @@ class ToolPanelsStack(QWidget):
 
     def _info_banner(self, text: str, icon_name: str = "pdf") -> QFrame:
         banner = QFrame()
-        # QSS handles styling via theme
+        banner.setObjectName("InfoBanner")
         hb = QHBoxLayout(banner)
-        hb.setContentsMargins(4, 2, 4, 2)
+        hb.setContentsMargins(12, 10, 12, 10)
         hb.setSpacing(10)
         ic = QLabel()
         ic.setPixmap(get_pixmap(icon_name, PRIMARY, 18))
@@ -160,6 +164,107 @@ class ToolPanelsStack(QWidget):
         self._update_panel_state()
         self._update_dynamic_labels()
 
+    def set_files(self, files: list[PdfFile]):
+        self._files = list(files)
+        self._refresh_merge_file_list()
+        self._update_panel_state()
+        self._update_dynamic_labels()
+
+    def set_external_queue(self, enabled: bool):
+        """Hide the in-panel merge queue when ToolWorkspace supplies one."""
+        self._external_queue = enabled
+        for widget in getattr(self, "merge_queue_widgets", []):
+            widget.setVisible(not enabled)
+        self._update_panel_state()
+
+    def _refresh_merge_file_list(self):
+        if not hasattr(self, "merge_file_list"):
+            return
+        self.merge_file_list.blockSignals(True)
+        self.merge_file_list.clear()
+
+        total_pages = sum(f.page_count for f in self._files if f.page_count)
+        for i, f in enumerate(self._files, 1):
+            item = QListWidgetItem(f" {i}.  {f.name}   ({f.page_count} pgs • {f.size_mb:.2f} MB)")
+            item.setIcon(get_icon("pdf", PRIMARY, 16))
+            item.setData(Qt.UserRole, f)
+            item.setToolTip(f"{f.path}\nPages: {f.page_count}\nSize: {f.size_mb:.2f} MB")
+            item.setSizeHint(QSize(0, 34))
+            self.merge_file_list.addItem(item)
+
+        self.merge_file_list.blockSignals(False)
+
+        count = len(self._files)
+        if hasattr(self, "merge_count_label"):
+            if count == 0:
+                self.merge_count_label.setText("0 documents")
+            elif count == 1:
+                self.merge_count_label.setText(f"1 document ({total_pages} pages)")
+            else:
+                self.merge_count_label.setText(f"{count} documents ({total_pages} pages)")
+
+        if hasattr(self, "merge_hint_label"):
+            if count < 2:
+                self.merge_hint_label.setText(
+                    "Add at least 2 PDF documents to merge. Drag items or use ▲ / ▼ to adjust merge sequence."
+                )
+            else:
+                self.merge_hint_label.setText(
+                    f"Documents will be combined in top-to-bottom sequence ({total_pages} total pages in output)."
+                )
+
+        self._update_merge_buttons_state()
+
+    def _update_merge_buttons_state(self):
+        if not hasattr(self, "merge_file_list"):
+            return
+        curr_row = self.merge_file_list.currentRow()
+        count = self.merge_file_list.count()
+        has_sel = curr_row >= 0
+        if hasattr(self, "btn_merge_up"):
+            self.btn_merge_up.setEnabled(has_sel and curr_row > 0)
+        if hasattr(self, "btn_merge_down"):
+            self.btn_merge_down.setEnabled(has_sel and curr_row < count - 1)
+        if hasattr(self, "btn_merge_remove"):
+            self.btn_merge_remove.setEnabled(has_sel)
+        if hasattr(self, "btn_merge_clear"):
+            self.btn_merge_clear.setEnabled(count > 0)
+
+    def _move_merge_item(self, delta: int):
+        row = self.merge_file_list.currentRow()
+        if row < 0:
+            return
+        new_row = row + delta
+        if 0 <= new_row < len(self._files):
+            item = self._files.pop(row)
+            self._files.insert(new_row, item)
+            self.files_reordered.emit(list(self._files))
+            self._refresh_merge_file_list()
+            self.merge_file_list.setCurrentRow(new_row)
+
+    def _remove_merge_item(self):
+        row = self.merge_file_list.currentRow()
+        if 0 <= row < len(self._files):
+            self._files.pop(row)
+            self.files_reordered.emit(list(self._files))
+            self._refresh_merge_file_list()
+            new_row = min(row, len(self._files) - 1)
+            if new_row >= 0:
+                self.merge_file_list.setCurrentRow(new_row)
+
+    def _clear_merge_items(self):
+        self._files.clear()
+        self.files_reordered.emit([])
+        self._refresh_merge_file_list()
+
+    def _on_merge_rows_moved(self, parent, start, end, dest, dest_row):
+        self._files = [
+            self.merge_file_list.item(i).data(Qt.UserRole)
+            for i in range(self.merge_file_list.count())
+        ]
+        self.files_reordered.emit(list(self._files))
+        self._refresh_merge_file_list()
+
     def show_tool(self, name: str):
         panel = self.panels.get(name.lower())
         self.stack.setCurrentWidget(panel if panel else self.empty)
@@ -169,9 +274,12 @@ class ToolPanelsStack(QWidget):
     def _update_panel_state(self):
         has_file = self.current_file is not None
         has_images = hasattr(self, "img_list") and self.img_list.count() > 0
+        can_merge = len(self._files) >= 2 if self._external_queue else (len(self._files) >= 2 or has_file)
         for btn, requirement in self._actions:
             if requirement == "file":
                 btn.setEnabled(has_file)
+            elif requirement == "merge":
+                btn.setEnabled(can_merge)
             elif requirement == "images":
                 btn.setEnabled(has_images)
             else:
@@ -212,16 +320,86 @@ class ToolPanelsStack(QWidget):
     def _create_merge_panel(self):
         w = QWidget()
         layout = QVBoxLayout(w)
-        layout.setSpacing(14)
+        layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addWidget(self._section_header("Merge Configuration"))
-        layout.addWidget(self._info_banner(
-            "Combines all documents currently loaded in the Home Library in top-to-bottom sequence. "
-            "You can drag files in the library to adjust their merge order.",
-            "merge"
-        ))
+        # Section 1: Documents to Merge (In-context queue)
+        queue_box = QWidget()
+        ql = QVBoxLayout(queue_box)
+        ql.setContentsMargins(0, 0, 0, 0)
+        ql.setSpacing(8)
 
+        sec_header = QHBoxLayout()
+        title_lbl = QLabel("Documents to Merge")
+        title_lbl.setObjectName("SectionHeader")
+        sec_header.addWidget(title_lbl)
+        sec_header.addStretch()
+        self.merge_count_label = QLabel("0 documents")
+        self.merge_count_label.setObjectName("SectionLabel")
+        sec_header.addWidget(self.merge_count_label)
+        ql.addLayout(sec_header)
+
+        # Action toolbar for the queue
+        btn_bar = QHBoxLayout()
+        btn_bar.setSpacing(8)
+
+        add_btn = QPushButton("  Add PDFs…")
+        add_btn.setObjectName("Secondary")
+        add_btn.setIcon(get_icon("add", TEXT_1, 13))
+        add_btn.clicked.connect(lambda: self.add_files_requested.emit())
+        btn_bar.addWidget(add_btn)
+
+        self.btn_merge_up = QPushButton("▲ Up")
+        self.btn_merge_up.setObjectName("Secondary")
+        self.btn_merge_up.setToolTip("Move selected document up in merge order")
+        self.btn_merge_up.clicked.connect(lambda: self._move_merge_item(-1))
+        btn_bar.addWidget(self.btn_merge_up)
+
+        self.btn_merge_down = QPushButton("▼ Down")
+        self.btn_merge_down.setObjectName("Secondary")
+        self.btn_merge_down.setToolTip("Move selected document down in merge order")
+        self.btn_merge_down.clicked.connect(lambda: self._move_merge_item(1))
+        btn_bar.addWidget(self.btn_merge_down)
+
+        self.btn_merge_remove = QPushButton("✕ Remove")
+        self.btn_merge_remove.setObjectName("Secondary")
+        self.btn_merge_remove.setToolTip("Remove selected document from merge queue")
+        self.btn_merge_remove.clicked.connect(self._remove_merge_item)
+        btn_bar.addWidget(self.btn_merge_remove)
+
+        self.btn_merge_clear = QPushButton("Clear")
+        self.btn_merge_clear.setObjectName("Ghost")
+        self.btn_merge_clear.setIcon(get_icon("trash", TEXT_MUTED, 12))
+        self.btn_merge_clear.setToolTip("Clear all documents from queue")
+        self.btn_merge_clear.clicked.connect(self._clear_merge_items)
+        btn_bar.addWidget(self.btn_merge_clear)
+
+        ql.addLayout(btn_bar)
+
+        # List Widget
+        self.merge_file_list = QListWidget()
+        self.merge_file_list.setObjectName("MergeFileList")
+        self.merge_file_list.setDragDropMode(QAbstractItemView.InternalMove)
+        self.merge_file_list.setDefaultDropAction(Qt.MoveAction)
+        self.merge_file_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.merge_file_list.setFrameShape(QFrame.NoFrame)
+        self.merge_file_list.setMinimumHeight(130)
+        self.merge_file_list.setMaximumHeight(210)
+        self.merge_file_list.currentItemChanged.connect(lambda *_: self._update_merge_buttons_state())
+        self.merge_file_list.model().rowsMoved.connect(self._on_merge_rows_moved)
+        ql.addWidget(self.merge_file_list)
+
+        self.merge_hint_label = QLabel(
+            "Add at least 2 PDF documents to merge. Drag items or use ▲ / ▼ to adjust merge sequence."
+        )
+        self.merge_hint_label.setObjectName("Hint")
+        self.merge_hint_label.setWordWrap(True)
+        ql.addWidget(self.merge_hint_label)
+
+        self.merge_queue_widgets = [queue_box]
+        layout.addWidget(queue_box)
+
+        # Section 2: Output Destination
         layout.addWidget(self._section_header("Output Destination"))
         layout.addWidget(self._field_label("Destination File"))
         self.merge_out = QLineEdit()
@@ -242,11 +420,14 @@ class ToolPanelsStack(QWidget):
             "  Merge PDFs Now", "merge",
             lambda: self._emit("merge", lambda: {
                 "output_path": Path(self.merge_out.text().strip()) if self.merge_out.text().strip() else None
-            })
+            }),
+            requirement="merge"
         )
-        layout.addSpacing(12)
+        layout.addSpacing(10)
         layout.addWidget(btn)
         layout.addStretch()
+
+        self._update_merge_buttons_state()
         return w
 
     def _create_split_panel(self):

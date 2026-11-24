@@ -82,6 +82,23 @@ def test_home_view():
     assert home.findChild(QPushButton, "HomeBrowseButton") is not None
 
 
+def test_tool_workspace():
+    from PySide6.QtWidgets import QApplication, QTabWidget
+    from src.ui.tool_registry import get_tool
+    from src.ui.widgets.tool_workspace import ToolWorkspace
+
+    app = QApplication.instance() or QApplication([])
+    ws = ToolWorkspace()
+    tabs = ws.findChild(QTabWidget, "ToolTabs")
+    assert tabs is not None
+    assert [tabs.tabText(i) for i in range(tabs.count())] == ["Options", "Preview"]
+    ws.show_tool(get_tool("merge"))
+    assert "PDF" in ws.requirement_label.text()
+    assert not ws.file_queue.up_button.isHidden()
+    ws.show_tool(get_tool("compress"))
+    assert ws.file_queue.up_button.isHidden()
+
+
 def main():
     tests = [(name, fn) for name, fn in sorted(globals().items())
              if name.startswith("test_") and callable(fn)]
