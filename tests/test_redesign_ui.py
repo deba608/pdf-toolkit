@@ -20,6 +20,31 @@ def test_registry():
     assert get_tool("does-not-exist") is None
 
 
+def test_session_rules():
+    from src.core.models import PdfFile
+    from src.ui.tool_registry import get_tool
+    from src.ui.widgets.tool_session import ToolSession
+
+    def pdf(name):
+        return PdfFile(path=Path(name), name=name, page_count=3)
+
+    single = ToolSession(get_tool("compress"))
+    assert single.add_pdfs([pdf("a.pdf"), pdf("b.pdf")]) == [single.files[0]]
+    assert len(single.files) == 1
+    assert single.add_pdfs([pdf("c.pdf")]) == []
+
+    multi = ToolSession(get_tool("merge"))
+    assert len(multi.add_pdfs([pdf("a.pdf"), pdf("b.pdf"), pdf("c.pdf")])) == 3
+    multi.move(2, -1)
+    assert [p.name for p in multi.files] == ["a.pdf", "c.pdf", "b.pdf"]
+    multi.remove_at(0)
+    assert [p.name for p in multi.files] == ["c.pdf", "b.pdf"]
+
+    images = ToolSession(get_tool("images to pdf"))
+    assert images.add_pdfs([pdf("a.pdf")]) == []
+    assert images.add_images([Path("x.png"), Path("bad.txt")]) == [Path("x.png")]
+
+
 def main():
     tests = [(name, fn) for name, fn in sorted(globals().items())
              if name.startswith("test_") and callable(fn)]

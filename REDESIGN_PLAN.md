@@ -184,7 +184,7 @@ def test_session_rules():
     from src.ui.widgets.tool_session import ToolSession
 
     def pdf(name):
-        return PdfFile(path=Path(name), name=name, page_count=3, size_mb=1.0)
+        return PdfFile(path=Path(name), name=name, page_count=3)
 
     single = ToolSession(get_tool("compress"))
     assert single.add_pdfs([pdf("a.pdf"), pdf("b.pdf")]) == [single.files[0]]
