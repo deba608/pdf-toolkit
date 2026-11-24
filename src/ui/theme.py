@@ -508,7 +508,6 @@ QPushButton {{
     padding: 7px 14px;
     font-weight: 500;
     font-size: 13px;
-    min-height: 20px;
 }}
 QPushButton:hover {{
     background: {CANVAS_MUTE};
