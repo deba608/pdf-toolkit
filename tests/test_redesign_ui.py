@@ -99,6 +99,23 @@ def test_tool_workspace():
     assert ws.file_queue.up_button.isHidden()
 
 
+def test_main_window_shell():
+    from PySide6.QtWidgets import QApplication, QPushButton
+    from src.ui.main_window import MainWindow
+
+    app = QApplication.instance() or QApplication([])
+    win = MainWindow()
+    assert win.findChild(QPushButton, "Sidebar") is None
+    assert not hasattr(win, "sidebar")
+    assert win.home_view is not None
+    assert win.workspace is not None
+    win._nav_to("merge")
+    assert win.session.spec.key == "merge"
+    assert win.content_stack.currentIndex() == 1
+    win._nav_to("home")
+    assert win.content_stack.currentIndex() == 0
+
+
 def main():
     tests = [(name, fn) for name, fn in sorted(globals().items())
              if name.startswith("test_") and callable(fn)]

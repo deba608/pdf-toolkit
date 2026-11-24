@@ -39,18 +39,14 @@ class FileQueue(QWidget):
         self.list.setFrameShape(QFrame.NoFrame)
         self.list.setIconSize(QSize(20, 20))
         self.list.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.list.currentItemChanged.connect(
-            lambda current, _: self.activeChanged.emit(
-                current.data(Qt.UserRole) if current else None
-            )
-        )
+        self.list.currentItemChanged.connect(self._on_current_changed)
         v.addWidget(self.list, 1)
 
         buttons = QHBoxLayout()
         buttons.setSpacing(8)
-        self.up_button = QPushButton("▲ Up")
+        self.up_button = QPushButton("Up")
         self.up_button.setObjectName("Secondary")
-        self.down_button = QPushButton("▼ Down")
+        self.down_button = QPushButton("Down")
         self.down_button.setObjectName("Secondary")
         self.remove_button = QPushButton("✕ Remove")
         self.remove_button.setObjectName("Secondary")
@@ -88,6 +84,18 @@ class FileQueue(QWidget):
         self.clear_button.setEnabled(len(files) > 0)
         if active is not None:
             self._select(active)
+        self._update_move_buttons()
+
+    def _on_current_changed(self, current, _previous):
+        self.activeChanged.emit(current.data(Qt.UserRole) if current else None)
+        self._update_move_buttons()
+
+    def _update_move_buttons(self):
+        row = self.list.currentRow()
+        count = self.list.count()
+        self.up_button.setEnabled(row > 0)
+        self.down_button.setEnabled(0 <= row < count - 1)
+        self.remove_button.setEnabled(row >= 0)
 
     def _select(self, pdf: PdfFile):
         for i in range(self.list.count()):
