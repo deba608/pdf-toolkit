@@ -45,6 +45,28 @@ def test_session_rules():
     assert images.add_images([Path("x.png"), Path("bad.txt")]) == [Path("x.png")]
 
 
+def test_drop_zone_and_file_queue():
+    from PySide6.QtWidgets import QApplication
+    from src.ui.tool_registry import get_tool
+    from src.ui.widgets.drop_zone import DropZone
+    from src.ui.widgets.file_queue import FileQueue
+
+    app = QApplication.instance() or QApplication([])
+    zone = DropZone()
+    zone.set_spec(get_tool("merge"))
+    assert zone.accepts_suffix(".pdf")
+    assert not zone.accepts_suffix(".png")
+    assert "Merge" in zone.title_label.text()
+
+    zone.set_spec(get_tool("images to pdf"))
+    assert zone.accepts_suffix(".png")
+    assert not zone.accepts_suffix(".pdf")
+
+    queue = FileQueue()
+    queue.set_can_reorder(False)
+    assert not queue.up_button.isVisible()
+
+
 def main():
     tests = [(name, fn) for name, fn in sorted(globals().items())
              if name.startswith("test_") and callable(fn)]
