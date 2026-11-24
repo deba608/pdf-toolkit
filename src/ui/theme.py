@@ -764,6 +764,128 @@ QDialog, QMessageBox, QInputDialog {{
 QMessageBox QLabel, QInputDialog QLabel {{
     color: {TEXT_1};
 }}
+
+/* ---------- Redesign: Home Grid ---------- */
+QWidget#HomeView {{
+    background: {CANVAS};
+}}
+QFrame#HomeDropStrip, QFrame#DropZone {{
+    background: {CANVAS_ALT};
+    border: 2px dashed {BORDER};
+    border-radius: {RADIUS_LG}px;
+}}
+QFrame#HomeDropStrip[dropActive="true"], QFrame#DropZone[dropActive="true"] {{
+    background: {PRIMARY_SOFT};
+    border: 2px dashed {PRIMARY};
+}}
+QLabel#HomeTitle {{
+    font-size: 26px;
+    font-weight: 700;
+    color: {TEXT_1};
+}}
+QLabel#HomeSubtitle {{
+    font-size: 13px;
+    color: {TEXT_2};
+}}
+QLabel#HomeSectionTitle {{
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: {TEXT_2};
+    padding-top: 8px;
+}}
+QLabel#HomeRecent {{
+    font-size: 12px;
+    color: {TEXT_3};
+}}
+QPushButton#ToolCard {{
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_LG}px;
+    text-align: left;
+    padding: 10px;
+}}
+QPushButton#ToolCard:hover {{
+    background: {CANVAS_SOFT};
+    border: 1px solid {PRIMARY};
+}}
+QPushButton#ToolCard:focus {{
+    border: 1px solid {PRIMARY};
+}}
+QLabel#ToolCardIcon {{
+    background: {PRIMARY_SOFT};
+    border-radius: {RADIUS_MD}px;
+    padding: 6px;
+}}
+QLabel#ToolCardArrow {{
+    color: {TEXT_3};
+    font-size: 16px;
+}}
+QLabel#ToolCardTitle {{
+    font-size: 14px;
+    font-weight: 600;
+    color: {TEXT_1};
+}}
+QLabel#ToolCardDesc {{
+    font-size: 12px;
+    color: {TEXT_2};
+}}
+
+/* ---------- Redesign: Workspace ---------- */
+QLabel#WorkspaceHint {{
+    font-size: 13px;
+    color: {TEXT_2};
+    padding: 2px 0;
+}}
+QLabel#DropZoneTitle {{
+    font-size: 15px;
+    font-weight: 600;
+    color: {TEXT_1};
+}}
+QLabel#DropZoneSubtitle {{
+    font-size: 12px;
+    color: {TEXT_2};
+}}
+QWidget#FileQueue, QFrame#WorkspaceLeft {{
+    background: transparent;
+}}
+QListWidget#FileQueueList {{
+    background: {CANVAS_ALT};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_MD}px;
+    padding: 4px;
+    outline: 0;
+}}
+QListWidget#FileQueueList::item {{
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_SM}px;
+    padding: 6px 10px;
+    margin: 2px;
+    color: {TEXT_1};
+}}
+QListWidget#FileQueueList::item:hover {{
+    background: {CANVAS_SOFT};
+    border: 1px solid rgba(100, 108, 255, 0.36);
+}}
+QListWidget#FileQueueList::item:selected {{
+    background: {PRIMARY_SOFT};
+    border: 1px solid {PRIMARY};
+}}
+QFrame#SettingsPanel {{
+    background: {CANVAS_ELV};
+    border: 1px solid {BORDER_SUBTLE};
+    border-radius: {RADIUS_LG}px;
+}}
+QTabWidget#ToolTabs::tab {{
+    padding: 8px 18px;
+    color: {TEXT_2};
+    font-weight: 600;
+}}
+QTabWidget#ToolTabs::tab:selected {{
+    color: {TEXT_1};
+    border-bottom: 2px solid {PRIMARY};
+}}
 """
 
 def apply_theme(app):

@@ -33,59 +33,68 @@ are still planned are listed in the [Roadmap](../README.md#-roadmap).
 
 ### Opening Files
 
+Files are added inside the tool you want to use. There is no shared input
+library.
+
 | Method | How |
 |--------|-----|
-| **Drag & drop** | Drop PDF files anywhere on the window |
-| **Sidebar button** | Click **+ Open PDFs** at the bottom left |
-| **Menu** | `File → Open PDF(s)…` or `Ctrl+O` |
-| **Home view** | Click **Add** above the file list |
+| **Home drop strip** | Drop PDFs on Home, then choose a tool from the picker |
+| **Tool workspace** | Drop files on the dashed target, or click **Browse files…** |
+| **Menu** | `File → Open PDF(s)…` or `Ctrl+O`, then choose a tool |
 
 Opening the same file twice is a no-op: files are matched by full path and
 de-duplicated. Encrypted PDFs prompt for the password once (three attempts).
 
-### The File Library
+### Workspaces and Outputs
 
-The **Home** view lists every loaded PDF with its page count and size.
-
-- **Click** a file to select it; the preview and every tool then act on it.
-- **Drag** a row to change the order — this is the merge order.
-- **Right-click → Remove**, or select a row and press `Delete`.
-- **Clear** empties the library.
+Each tool opens a fresh workspace. Its file queue belongs only to that tool;
+switching tools clears it. Results are added to the **Output Library**, whose
+count and recent files appear at the bottom of Home. `Ctrl+O` also loads files
+into the Output Library.
 
 ---
 
 ## Interface Overview
 
+Home is a full-screen tool grid with no sidebar:
+
 ```
-┌──────────────┬──────────────────────────────────────────────────┐
-│ PDF Toolkit  │  Header: current tool + selected file            │
-│              ├──────────────────────────────────────────────────┤
-│ LIBRARY      │                                                  │
-│  Home        │   File list            │   Preview                │
-│ TOOLS        │   (drag to reorder)    │   (native PDF renderer)  │
-│  Merge       │                        │                          │
-│  Split       │                        │                          │
-│  Rotate      │                        │                          │
-│  Reorder     │                        │                          │
-│  Watermark   │                        │                          │
-│  Compress    │                        │                          │
-│ SECURITY     │                        │                          │
-│  Encrypt     │                        │                          │
-│  Decrypt     │                        │                          │
-│ CONVERT      │                        │                          │
-│  PDF→Images  │                        │                          │
-│  Images→PDF  │                        │                          │
-│ AUTOMATION   │                        │                          │
-│  Batch run   │                        │                          │
-├──────────────┴──────────────────────────────────────────────────┤
-│  Status bar                                    [progress]       │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ PDF Toolkit   Everything you need for PDFs...      OFFLINE   │
+├──────────────────────────────────────────────────────────────┤
+│  Drop PDFs here to get started            [Browse files...]  │
+│                                                              │
+│  TOOLS                                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                      │
+│  │ Merge    │ │ Split    │ │ Rotate   │                      │
+│  └──────────┘ └──────────┘ └──────────┘                      │
+│  CONVERTER / SECURITY / AUTOMATION / LIBRARY                  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-- **Home** shows the library and a preview of the selected file.
-- **Tool views** show the parameter panel on the left and a preview on the
-  right. Tools that need a file show a warning banner until one is selected.
-- **Batch run** applies one operation to every PDF in the library.
+After choosing a tool:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ← Home   Merge   Combine multiple PDFs into one       ?      │
+├───────────────────────────────┬──────────────────────────────┤
+│ Add at least two PDFs         │ [ Options ] [ Preview ]      │
+│ ┌───────────────────────────┐ │                              │
+│ │ Drop PDFs here for Merge  │ │  Output destination          │
+│ └───────────────────────────┘ │  ...                         │
+│ 2 files        [Clear]        │                              │
+│ 1. alpha.pdf                  │                              │
+│ 2. beta.pdf                   │                              │
+│ [Up] [Down] [Remove]          │                              │
+└───────────────────────────────┴──────────────────────────────┘
+```
+
+- **Options** auto-selects after files are added. **Preview** shows the active
+  file when you select a queue item.
+- Merge and batch queues support **Up**, **Down**, **Remove**, and **Clear**.
+  Single-PDF tools accept one file; **Images → PDF** accepts images only.
+- Dropping PDFs on Home opens a tool picker. Dropping files inside a workspace
+  adds them to that tool's session.
 
 The preview is rendered by Qt's native PDF engine: it works fully offline and
 opens password-protected files with the password you entered.
@@ -96,104 +105,97 @@ opens password-protected files with the password you entered.
 
 ### Merge PDFs
 
-1. Open two or more PDFs.
-2. Drag the rows into the order you want.
-3. Sidebar → **Merge**.
+1. Home → **Merge**.
+2. Drop two or more PDFs into the workspace, or click **Browse files…**.
+3. Use **Up** / **Down** in the queue to set merge order.
 4. Optionally set an output path (default: `merged.pdf` next to the first file).
-5. Click **Merge PDFs**. The result is added to the library and selected.
+5. Click **Merge PDFs**. The result is added to the Output Library.
 
-> The whole library is merged. At least two files are required.
+> Only the files in this workspace are merged. At least two are required.
 
 ### Split a PDF
 
-1. Select the PDF.
-2. Sidebar → **Split**.
-3. Set **Pages per file** (for example `10`).
-4. Choose an output folder (default: the source folder).
-5. Click **Split PDF**.
+1. Home → **Split**, then add one PDF.
+2. Set **Pages per file** (for example `10`).
+3. Choose an output folder (default: the source folder).
+4. Click **Split PDF**.
 
 Output files are named `{name}_part1.pdf`, `{name}_part2.pdf`, … and are added
-to the library.
+to the Output Library.
 
 ### Rotate Pages
 
-1. Select the PDF.
-2. Sidebar → **Rotate**.
-3. Pick `90°`, `180°`, or `270°`.
-4. Optionally enter pages such as `1,3,5-8` (blank = all pages).
-5. Click **Rotate Pages**.
+1. Home → **Rotate**, then add one PDF.
+2. Pick `90°`, `180°`, or `270°`.
+3. Optionally enter pages such as `1,3,5-8` (blank = all pages).
+4. Click **Rotate Pages**.
 
 Rotation is added to each page's existing rotation.
 
 ### Reorder / Drop Pages
 
-1. Select the PDF.
-2. Sidebar → **Reorder**.
-3. Enter the new order, 1-based, for example `3,1,2`.
-4. Click **Apply Reorder**.
+1. Home → **Reorder**, then add one PDF.
+2. Enter the new order, 1-based, for example `3,1,2`.
+3. Click **Apply Reorder**.
 
 Leave the field blank to keep the current order. Pages you do not list are
 dropped from the output, which makes this a quick way to extract pages too.
 
 ### Add a Watermark
 
-1. Select the PDF.
-2. Sidebar → **Watermark**.
-3. Enter the text, opacity, and font size.
-4. Click **Add Watermark**.
+1. Home → **Watermark**, then add one PDF.
+2. Enter the text, opacity, and font size.
+3. Click **Add Watermark**.
 
 The watermark is stamped once, centred, on every page.
 
 ### Encrypt
 
-1. Select the PDF.
-2. Sidebar → **Encrypt**.
-3. Enter a **user password** (required to open) and optionally an **owner
+1. Home → **Encrypt**, then add one PDF.
+2. Enter a **user password** (required to open) and optionally an **owner
    password** (defaults to the user password).
-4. Choose permissions:
+3. Choose permissions:
    - **No permissions** — printing, copying, and editing are denied.
    - **Allow printing** — printing only.
    - **Allow all** — the default; the password protects opening, not usage.
-5. Click **Encrypt PDF**.
+4. Click **Encrypt PDF**.
 
 Output uses AES-256. There is no recovery: if you lose the password, the file
 cannot be opened.
 
 ### Decrypt
 
-1. Select the encrypted PDF (enter its password when prompted).
-2. Sidebar → **Decrypt**.
-3. Leave the password field blank to reuse the password you opened it with, or
+1. Home → **Decrypt**, then add one PDF. Enter its password when prompted.
+2. Leave the password field blank to reuse the password you opened it with, or
    type another one.
-4. Click **Decrypt PDF**.
+3. Click **Decrypt PDF**.
 
 The output has no encryption and no permission restrictions.
 
 ### Compress
 
-1. Select the PDF.
-2. Sidebar → **Compress**.
-3. Set **Image quality** — images above 150 DPI are downsampled and re-encoded
+1. Home → **Compress**, then add one PDF.
+2. Set **Image quality** — images above 150 DPI are downsampled and re-encoded
    at this quality; fonts and file structure are also cleaned.
-4. Click **Compress PDF**.
+3. Click **Compress PDF**.
 
 Text-only PDFs barely shrink. Scanned/image-heavy PDFs shrink a lot. Lower
 quality means a smaller file and more visible JPEG artefacts.
 
 ### Export PDF to Images
 
-1. Select the PDF.
-2. Sidebar → **PDF → Images**.
-3. Choose DPI (72–600) and PNG or JPG.
-4. Choose an output folder.
-5. Click **Export Images**.
+1. Home → **PDF → Images**, then add one PDF.
+2. Choose DPI (72–600) and PNG or JPG.
+3. Choose an output folder.
+4. Click **Export Images**.
 
 Files are named `{name}_page1.png`, `{name}_page2.png`, …
 
 ### Build a PDF from Images
 
-1. Sidebar → **Images → PDF** (no PDF needs to be selected).
-2. Click **Add Images** and pick PNG, JPG, BMP, or TIFF files.
+1. Home → **Images → PDF**.
+2. Drop PNG, JPG, BMP, or TIFF files into the workspace, or click
+   **Add Images**.
 3. Optionally set the output path.
 4. Click **Create PDF**.
 
@@ -223,9 +225,9 @@ own inputs; choose a different output name if you see that error.
 
 ## Batch Processing
 
-Open **Batch run** from the sidebar or with `Ctrl+B`.
+Open **Home → Batch run** or press `Ctrl+B`.
 
-1. The queue shows every PDF currently in the library.
+1. Add one or more PDFs to the batch workspace.
 2. Pick an operation: compress, rotate, watermark, encrypt, decrypt, export to
    images, or split.
 3. Set the parameters (the same ones as the single-file tool).
@@ -233,8 +235,8 @@ Open **Batch run** from the sidebar or with `Ctrl+B`.
 5. Click **Run batch**.
 
 Each row reports Pending, Running, Done, or Error. Hover an error row for the
-message. Files produced by the batch are added back to the library when the run
-finishes. **Reset status** clears the row markers for another run.
+message. Files produced by the batch are added back to the Output Library when
+the run finishes. **Reset status** clears the row markers for another run.
 
 ---
 
@@ -242,14 +244,14 @@ finishes. **Reset status** clears the row markers for another run.
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+O` | Open PDF files |
+| `Ctrl+O` | Open PDF files and choose a tool |
 | `Ctrl+S` | Save a copy of the selected PDF |
 | `Ctrl+Shift+S` | Save a copy (same dialog) |
 | `Ctrl+B` | Open batch processing |
 | `Ctrl++` / `Ctrl+=` | Zoom preview in |
 | `Ctrl+-` | Zoom preview out |
 | `Ctrl+0` | Reset preview zoom |
-| `Delete` | Remove the selected file from the library |
+| `Delete` | Clear the Output Library |
 | `F1` | Show the shortcut list |
 | `Ctrl+Q` | Quit |
 

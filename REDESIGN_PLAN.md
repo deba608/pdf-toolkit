@@ -1,6 +1,6 @@
 # PDF Toolkit UI Redesign Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the sidebar-based shell with a full-screen Home Grid, per-tool workspaces with drag-and-drop file queues, and a right-side tabbed Options/Preview panel, without changing PDF engine behavior.
 
@@ -48,7 +48,7 @@
 - [x] **Step 1:** Write canonical terms to `CONTEXT.md`: Home Grid, Tool Spec, Tool Workspace, Drop Zone, File Queue, Tool Session, Settings Panel, Preview Panel, Output Library.
 - [x] **Step 2:** Write approved design spec to `docs/superpowers/specs/2026-11-24-ui-redesign-design.md`.
 - [x] **Step 3:** Write this plan to `REDESIGN_PLAN.md`.
-- [ ] **Step 4:** Create pointer file `docs/superpowers/plans/2026-11-24-ui-redesign.md` with a single line: `See [REDESIGN_PLAN.md](../../REDESIGN_PLAN.md) for the full implementation plan.`
+- [x] **Step 4:** Create pointer file `docs/superpowers/plans/2026-11-24-ui-redesign.md` with a single line: `See [REDESIGN_PLAN.md](../../REDESIGN_PLAN.md) for the full implementation plan.`
 
 ---
 
@@ -58,7 +58,7 @@
 - Create: `src/ui/tool_registry.py`
 - Test: `tests/test_redesign_ui.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -84,12 +84,12 @@ def test_registry():
     assert get_tool("does-not-exist") is None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'src.ui.tool_registry'`.
 
-- [ ] **Step 3: Write the contract implementation**
+- [x] **Step 3: Write the contract implementation**
 
 Create `src/ui/tool_registry.py` with exactly:
 
@@ -152,12 +152,12 @@ def pdf_tools() -> tuple[ToolSpec, ...]:
     return tuple(tool for tool in TOOLS if tool.input_mode in PDF_INPUT_MODES)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_registry`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/ui/tool_registry.py tests/test_redesign_ui.py CONTEXT.md docs/superpowers/specs/2026-11-24-ui-redesign-design.md REDESIGN_PLAN.md docs/superpowers/plans/2026-11-24-ui-redesign.md
@@ -172,7 +172,7 @@ git commit -m "docs: spec and contracts for UI redesign"
 - Create: `src/ui/widgets/tool_session.py`
 - Test: `tests/test_redesign_ui.py`
 
-- [ ] **Step 1: Add failing session tests**
+- [x] **Step 1: Add failing session tests**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -203,12 +203,12 @@ def test_session_rules():
     assert images.add_images([Path("x.png"), Path("bad.txt")]) == [Path("x.png")]
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'src.ui.widgets.tool_session'`.
 
-- [ ] **Step 3: Implement ToolSession**
+- [x] **Step 3: Implement ToolSession**
 
 Create `src/ui/widgets/tool_session.py` with exactly:
 
@@ -288,12 +288,12 @@ class ToolSession:
         self.active_file = None
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_session_rules`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/ui/widgets/tool_session.py tests/test_redesign_ui.py
@@ -309,7 +309,7 @@ git commit -m "feat: add per-tool session state"
 - Create: `src/ui/widgets/file_queue.py`
 - Test: `tests/test_redesign_ui.py`
 
-- [ ] **Step 1: Add failing widget tests**
+- [x] **Step 1: Add failing widget tests**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -336,12 +336,12 @@ def test_drop_zone_and_file_queue():
     assert not queue.up_button.isEnabled()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'src.ui.widgets.drop_zone'`.
 
-- [ ] **Step 3: Implement DropZone**
+- [x] **Step 3: Implement DropZone**
 
 Create `src/ui/widgets/drop_zone.py` with exactly:
 
@@ -438,7 +438,7 @@ class DropZone(QFrame):
 
 Replace the import line `from PySide6.QtCore import Signal` with `from PySide6.QtCore import Qt, Signal` in the same file.
 
-- [ ] **Step 4: Implement FileQueue**
+- [x] **Step 4: Implement FileQueue**
 
 Create `src/ui/widgets/file_queue.py` with exactly:
 
@@ -548,12 +548,12 @@ class FileQueue(QWidget):
             self.moveRequested.emit(row, delta)
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_drop_zone_and_file_queue`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ui/widgets/drop_zone.py src/ui/widgets/file_queue.py tests/test_redesign_ui.py
@@ -568,7 +568,7 @@ git commit -m "feat: add drop zone and file queue widgets"
 - Create: `src/ui/widgets/home_view.py`
 - Test: `tests/test_redesign_ui.py`
 
-- [ ] **Step 1: Add failing tests**
+- [x] **Step 1: Add failing tests**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -588,12 +588,12 @@ def test_home_view():
     assert home.findChild(QPushButton, "HomeBrowseButton") is not None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'src.ui.widgets.home_view'`.
 
-- [ ] **Step 3: Implement HomeView**
+- [x] **Step 3: Implement HomeView**
 
 Create `src/ui/widgets/home_view.py` with exactly:
 
@@ -740,12 +740,12 @@ class HomeView(QWidget):
         self.grid.setRowStretch(row + 8, 1)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_home_view`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/ui/widgets/home_view.py tests/test_redesign_ui.py
@@ -761,7 +761,7 @@ git commit -m "feat: build responsive home tool grid"
 - Modify: `src/ui/widgets/tool_panels.py`
 - Test: `tests/test_redesign_ui.py`
 
-- [ ] **Step 1: Add failing workspace tests**
+- [x] **Step 1: Add failing workspace tests**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -783,12 +783,12 @@ def test_tool_workspace():
     assert not ws.file_queue.up_button.isVisible()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'src.ui.widgets.tool_workspace'`.
 
-- [ ] **Step 3: Add external-queue support to ToolPanelsStack**
+- [x] **Step 3: Add external-queue support to ToolPanelsStack**
 
 In `src/ui/widgets/tool_panels.py`, add `self._external_queue = False` in `__init__` after `self._actions = []`. Then append this method after `set_files()`:
 
@@ -881,7 +881,7 @@ to:
         can_merge = len(self._files) >= 2 if self._external_queue else (len(self._files) >= 2 or has_file)
 ```
 
-- [ ] **Step 4: Implement ToolWorkspace**
+- [x] **Step 4: Implement ToolWorkspace**
 
 Create `src/ui/widgets/tool_workspace.py` with exactly:
 
@@ -1026,12 +1026,12 @@ class ToolWorkspace(QWidget):
         return f"Add one PDF to {spec.label.lower()}. Extra files will be rejected."
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_tool_workspace`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ui/widgets/tool_workspace.py src/ui/widgets/tool_panels.py tests/test_redesign_ui.py
@@ -1046,7 +1046,7 @@ git commit -m "feat: build tool workspace with options and preview tabs"
 - Modify: `src/ui/main_window.py`
 - Test: `tests/test_redesign_ui.py`, `tests/test_e2e_ui.py`, `tests/test_ui_check.py`
 
-- [ ] **Step 1: Add failing shell tests**
+- [x] **Step 1: Add failing shell tests**
 
 Append to `tests/test_redesign_ui.py`:
 
@@ -1068,12 +1068,12 @@ def test_main_window_shell():
     assert win.content_stack.currentIndex() == 0
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: FAIL with `AssertionError` because `MainWindow` still has `sidebar`.
 
-- [ ] **Step 3: Rewrite shell sections in MainWindow**
+- [x] **Step 3: Rewrite shell sections in MainWindow**
 
 In `src/ui/main_window.py`:
 
@@ -1295,12 +1295,12 @@ Keep everything from `self._set_busy(True)` onward unchanged.
 10. Delete `_deselect_current_file`, `_refresh_preview_empty_state`, `_refresh_tool_preview_empty_state`, `_on_nav_changed`, `_lookup_nav`, `_update_tool_banner`, `_sync_files`, `_on_files_reordered`, `_preview_action` if unreferenced; keep `_load_files()` legacy behavior (load into hidden `file_list`, sync `self.files`, call `_go_home()`).
 11. Keep `_load_with_password`, `_clear_files`, worker methods, `_operation_done`, `_add_outputs`, `_operation_error`, `_save_current`, recents, help dialogs, and geometry methods unchanged.
 
-- [ ] **Step 4: Run redesign tests**
+- [x] **Step 4: Run redesign tests**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS for `test_main_window_shell`.
 
-- [ ] **Step 5: Run existing UI checks**
+- [x] **Step 5: Run existing UI checks**
 
 Run:
 ```bash
@@ -1313,7 +1313,7 @@ python tests/test_all_features.py
 ```
 Expected: all scripts exit 0. Fix regressions before commit.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ui/main_window.py tests/test_redesign_ui.py
@@ -1327,7 +1327,7 @@ git commit -m "feat: replace sidebar shell with home grid and tool workspaces"
 **Files:**
 - Modify: `src/ui/theme.py`
 
-- [ ] **Step 1: Append new styles**
+- [x] **Step 1: Append new styles**
 
 Before the final `"""` of `STYLESHEET` in `src/ui/theme.py`, append exactly:
 
@@ -1448,12 +1448,12 @@ QTabWidget#ToolTabs::tab:selected {{
 }}
 ```
 
-- [ ] **Step 2: Verify theme loads**
+- [x] **Step 2: Verify theme loads**
 
 Run: `python tests/test_redesign_ui.py`
 Expected: PASS; no QSS parse errors printed to stderr.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/ui/theme.py
@@ -1468,7 +1468,7 @@ git commit -m "style: add home grid, drop zone, and workspace styles"
 - Modify: `docs/USER_GUIDE.md`
 - Test: all test scripts
 
-- [ ] **Step 1: Replace wireframe in `docs/USER_GUIDE.md`**
+- [x] **Step 1: Replace wireframe in `docs/USER_GUIDE.md`**
 
 Find the ASCII wireframe under "Interface Overview" (around lines 57–91) and replace it with:
 
@@ -1501,11 +1501,11 @@ After choosing a tool:
 └───────────────────────────────┴──────────────────────────────┘
 ```
 
-- [ ] **Step 2: Update workflow text**
+- [x] **Step 2: Update workflow text**
 
 Replace any sentence saying "select a tool from the sidebar" or "load PDFs in the Home library first" with: "Open a tool card on Home, then drop files into that tool's workspace."
 
-- [ ] **Step 3: Run full verification**
+- [x] **Step 3: Run full verification**
 
 Run:
 ```bash
@@ -1524,7 +1524,7 @@ Expected: all exit 0.
 
 Run `python src/main.py`. Verify: Home opens with no sidebar; grid shows sections; open Merge; drop two PDFs; Options tab active; reorder; merge; output appears in Output Library; Preview tab renders active file; Back returns Home.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/USER_GUIDE.md
@@ -1535,6 +1535,6 @@ git commit -m "docs: update user guide for home grid workflow"
 
 ## Self-review checklist
 
-- [ ] Every spec requirement maps to a task: Home Grid (T5/T7), no sidebar (T7), fresh session (T3/T7), dropzone (T4/T6), right tabs (T6), session-based execute (T7), engine unchanged (all), tests pass (T7/T9).
-- [ ] No placeholders (`TBD`, `TODO`, "fill in") remain in plan.
-- [ ] Names consistent: `ToolSpec`, `ToolSession`, `DropZone`, `FileQueue`, `HomeView`, `ToolWorkspace`, `session`, `filesAddedRequested`, `activeChanged`.
+- [x] Every spec requirement maps to a task: Home Grid (T5/T7), no sidebar (T7), fresh session (T3/T7), dropzone (T4/T6), right tabs (T6), session-based execute (T7), engine unchanged (all), tests pass (T7/T9).
+- [x] No placeholders (`TBD`, `TODO`, "fill in") remain in plan.
+- [x] Names consistent: `ToolSpec`, `ToolSession`, `DropZone`, `FileQueue`, `HomeView`, `ToolWorkspace`, `session`, `filesAddedRequested`, `activeChanged`.
